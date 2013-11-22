@@ -41,25 +41,30 @@
    enum yytokentype {
      TYPE = 258,
      STRUCTURE = 259,
-     ID = 260
+     ID = 260,
+     BODY = 261,
+     NUM = 262
    };
 #endif
 /* Tokens.  */
 #define TYPE 258
 #define STRUCTURE 259
 #define ID 260
+#define BODY 261
+#define NUM 262
 
 
 
 
 #if ! defined YYSTYPE && ! defined YYSTYPE_IS_DECLARED
 typedef union YYSTYPE
-#line 5 "transform.y"
+#line 6 "transform.y"
 {
   char *str;
+  int num;
 }
 /* Line 1529 of yacc.c.  */
-#line 63 "transform.tab.h"
+#line 68 "transform.tab.h"
 	YYSTYPE;
 # define yystype YYSTYPE /* obsolescent; will be withdrawn */
 # define YYSTYPE_IS_DECLARED 1
