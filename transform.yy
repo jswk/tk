@@ -187,6 +187,17 @@ body                :  BODY { printf("Body\n"); }
 
 %%
 
+struct declarator *find_declarator_of_type(struct declarator *first, int type) {
+  declarator *current = first;
+  while (current != NULL) {
+    if (current->type == type) {
+      return current;
+    }
+    current = current->next;
+  }
+  return NULL;
+}
+
 int yyerror(const char *s) {
   printf("blad: %s\n", s);
 }
@@ -203,15 +214,8 @@ int main()
     cout << fun->declarator->id;
 
     bool old_style = true;
-    declarator *current = fun->declarator;
-    while (current != NULL) {
-      if (current->param_list != NULL) {
-        old_style = false;
-        // write param list
-        break;
-      }
-      current = current->next;
-    }
+    declarator *param_list_declarator = find_declarator_of_type(fun->declarator, 2);
+    old_style = param_list_declarator == NULL;
 
     if (old_style) {
       cout << "Old style";
