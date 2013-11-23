@@ -3,10 +3,10 @@ all: transform
 transform: transform.tab.cc lex.yy.c
 	$(CXX) -o transform transform.tab.cc lex.yy.c
 
-transform.tab.cc:
+transform.tab.cc: transform.yy
 	bison -d transform.yy
 
-lex.yy.c:
+lex.yy.c: transform.l
 	flex transform.l
 
 clean:

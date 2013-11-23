@@ -4,6 +4,7 @@
 #include <string>
 #include <vector>
 #include <map>
+#include <sstream>
 
 extern "C"  {int yyparse(void); int yywrap() { return 1; }}
 
@@ -15,20 +16,21 @@ int yyerror(const char* s);
 
 struct declarator {
   declarator(int type) : type(type), next(NULL), param_list(NULL), identifier_list(NULL) {}
-  const char *id;
+  struct wrappedstring *id;
   int type;
-  int pointer;
-  struct declarator* next;
+  struct wrappedstring *decl_specifier;
+  struct wrappedstring *pointer;
+  struct declarator *next;
   int array;
-  struct param_list* param_list;
-  struct identifier_list* identifier_list;
+  struct param_list *param_list;
+  struct identifier_list *identifier_list;
 };
 
 struct function {
   struct wrappedstring *decl_specifier;
   struct declarator *declarator;
   const char *body;
-  map<string, string> parameter_declarations; // map parameter name to type
+  struct declaration_list* declarations; // map parameter name to type
   vector<string> parameters;
 };
 
@@ -36,8 +38,19 @@ struct identifier_list {
   vector<string> identifiers;
 };
 
-struct param_list {
+struct declarator_list {
+  vector<struct declarator*> declarators;
+  struct wrappedstring* decl_specifier;
+};
 
+struct declaration_list {
+  declaration_list() : duplicate(false) {}
+  map<string, string> declarations;
+  bool duplicate;
+};
+
+struct param_list {
+  vector<struct declarator*> declarators;
 };
 
 struct wrappedstring {
@@ -47,6 +60,59 @@ struct wrappedstring {
 
 vector<function *> functions;
 
+string getDeclarationString(struct declarator* decl, struct wrappedstring* decl_specifier) {
+    string out;
+    struct declarator* curr = decl;
+    ostringstream oss;
+    
+    out += decl_specifier->value;
+    out += " ";
+    while (curr != NULL) {
+        bool del = false;
+        switch (curr->type) {
+            case 0:
+                if (curr->pointer != NULL) {
+                    out += curr->pointer->value;
+                }
+                out += curr->id->value;
+            break;
+            case 1:
+                if (curr->array == -1) {
+                    out += "[]";
+                } else {
+                    oss << curr->array;
+                    out += '[';
+                    out += oss.str();
+                    out += ']';
+                    oss.flush();
+                }
+            break;
+            case 2:
+                for (vector<struct declarator*>::iterator it = curr->param_list->declarators.begin(); it != curr->param_list->declarators.end(); ++it) {
+                    if (del) out += ", ";
+                    out += getDeclarationString(*it, (*it)->decl_specifier);
+                    del = true;
+                }
+            break;
+            case 3:
+                // this should throw syntax error or something
+            break;
+        }
+        curr = curr->next;
+    }
+
+    return out;
+}
+
+void handleFunction(struct function* func) {
+    printf("Funkcja %s %s\n", func->decl_specifier->value.c_str(), func->declarator->id->value.c_str());
+    map<string, string>* mp = &func->declarations->declarations;
+    map<string, string>::iterator it;
+    for (it = mp->begin(); it != mp->end(); ++it) {
+        cout << it->first << ":" << it->second << "\n";
+    }
+}
+
 %}
 
 %union {
@@ -54,12 +120,17 @@ vector<function *> functions;
   struct wrappedstring *nstr;
   struct function *function;
   struct declarator *declarator;
+  struct declarator_list *declarator_list;
+  struct declaration_list *declaration_list;
   struct identifier_list *identifier_list;
   struct param_list *param_list;
   int number;
 };
 
-%type <declarator> declarator 
+%type <declarator> declarator
+%type <declarator_list> declarator_list
+%type <declarator_list> declaration
+%type <declaration_list> declaration_list
 %type <nstr> decl_specifier
 %type <function> function
 %type <declarator> direct_declarator
@@ -81,13 +152,14 @@ functions           :
                     ;
 
 function            :  decl_specifier declarator declaration_list body { 
-                        printf("Funkcja %s %s\n", $1->value.c_str(), $2->id); 
                         $$ = new function();
                         $$->decl_specifier = $1;
                         $$->declarator = $2;
+                        $$->declarations = $3;
+                        handleFunction($$);
                     }
                     |  decl_specifier declarator body { 
-                        printf("Funkcja %s %s\n", $1->value.c_str(), $2->id);
+                        printf("Funkcja %s %s\n", $1->value.c_str(), $2->id->value.c_str());
                         $$ = new function();
                         $$->decl_specifier = $1;
                         $$->declarator = $2;
@@ -95,13 +167,13 @@ function            :  decl_specifier declarator declaration_list body {
                     |  declarator declaration_list body { 
                         printf("3\n"); 
                         $$ = new function();
-                        $$->decl_specifier = NULL;
+                        $$->decl_specifier = new wrappedstring("void");
                         $$->declarator = $1;
                     }
                     |  declarator body { 
-                        printf("Znaleziono deklarator %s\n", $1->id); 
+                        printf("Znaleziono deklarator %s\n", $1->id->value.c_str()); 
                         $$ = new function();
-                        $$->decl_specifier = NULL;
+                        $$->decl_specifier = new wrappedstring("void");
                         $$->declarator = $1;
                     }
                 		;
@@ -110,20 +182,51 @@ decl_specifier      :  TYPE { $$ = new wrappedstring($1); }
                     |  STRUCTURE ID { $$ = new wrappedstring($1); $$->value.append(" "); $$->value.append($2); }
 		                ;
 
-declaration_list    :  declaration_list declaration
-                    |  declaration
+declaration_list    :  declaration_list declaration {
+                        $$ = $1;
 
-declaration         :  decl_specifier declarator_list ';'
-                    |  decl_specifier ';'
+                        pair<map<string,string>::iterator,bool> ret;
+                        for (vector<struct declarator*>::iterator it = $2->declarators.begin(); it != $2->declarators.end(); ++it) {
+                            ret = $$->declarations.insert(pair<string,string>((*it)->id->value, getDeclarationString(*it, $2->decl_specifier)));
+                            if (ret.second == false) {
+                                $$->duplicate = true;
+                            }
+                        }
+                    }
+                    |  declaration {
+                        $$ = new declaration_list();
 
-declarator_list     :  declarator ',' declarator_list
-                    |  declarator
+                        pair<map<string,string>::iterator,bool> ret;
+                        for (vector<struct declarator*>::iterator it = $1->declarators.begin(); it != $1->declarators.end(); ++it) {
+                            ret = $$->declarations.insert(pair<string,string>((*it)->id->value, getDeclarationString(*it, $1->decl_specifier)));
+                            if (ret.second == false) {
+                                $$->duplicate = true;
+                            }
+                        }
+                    }
 
-declarator          :  pointer direct_declarator 
+declaration         :  decl_specifier declarator_list ';' {
+                        $$ = $2;
+                        $$->decl_specifier = $1;
+                    }
+
+declarator_list     :  declarator ',' declarator_list {
+                        $$ = $3;
+                        $$->declarators.push_back($1);
+                    }
+                    |  declarator {
+                        $$ = new declarator_list();
+                        $$->declarators.push_back($1);
+                    }
+
+declarator          :  pointer direct_declarator { $$ = $2; $$->pointer = $1; }
                     |  direct_declarator
                     ;
 
-direct_declarator   :  ID { $$ = new declarator(0); $$->id = $1; }
+direct_declarator   :  ID {
+                        $$ = new declarator(0);
+                        $$->id = new wrappedstring($1);
+                    }
                     |  '(' declarator ')' { $$ = $2; }
                     |  direct_declarator '[' NUM ']' { 
                     $1->next = new declarator(1);
@@ -211,7 +314,7 @@ int main()
     function *fun = *iter;
     if (fun->decl_specifier == NULL) { cout << "int "; }
     else { cout << fun->decl_specifier->value << " "; }
-    cout << fun->declarator->id;
+    cout << fun->declarator->id->value;
 
     bool old_style = true;
     declarator *param_list_declarator = find_declarator_of_type(fun->declarator, 2);

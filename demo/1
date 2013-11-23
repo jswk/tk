@@ -1,1 +1,3 @@
-int asdf(b, c) {}
+int asdf(b, c)
+char *b, c[20];
+{}
