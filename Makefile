@@ -1,13 +1,13 @@
 all: transform
 
-transform: transform.tab.c lex.yy.c
-	$(CC) -o transform transform.tab.c lex.yy.c
+transform: transform.tab.cc lex.yy.c
+	$(CXX) -o transform transform.tab.cc lex.yy.c
 
-transform.tab.c:
-	bison -d transform.y
+transform.tab.cc:
+	bison -d transform.yy
 
 lex.yy.c:
 	flex transform.l
 
 clean:
-	rm -Rf transform.tab.c lex.yy.c transform
+	rm -Rf transform.tab.cc transform.tab.hh lex.yy.c transform
