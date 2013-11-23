@@ -35,6 +35,10 @@ struct function {
 
 struct function current_function;
 
+struct identifier_list {
+  vector<string> identifiers;
+};
+
 struct wrappedstring {
   wrappedstring(const char *val) : value(val) {}
   string value;
@@ -47,6 +51,7 @@ struct wrappedstring {
   struct wrappedstring *nstr;
   struct node *nd;
   struct decl_specifier *decl_spec;
+  struct identifier_list *identifier_list;
 };
 
 %type <str> declarator 
@@ -55,6 +60,7 @@ struct wrappedstring {
 %type <nd> direct_declarator
 %type <nstr> direct_abstract_declarator
 %type <nstr> pointer
+%type <identifier_list> identifier_list
 
 %token <str> TYPE
 %token <str> STRUCTURE
@@ -95,12 +101,17 @@ direct_declarator   :  ID { $$ = new node(); $$->value = $1; }
                     |  direct_declarator '[' NUM ']'
                     |  direct_declarator '[' ']'
                     |  direct_declarator '(' param_list ')'
-                    |  direct_declarator '(' identifier_list ')'
+                    |  direct_declarator '(' identifier_list ')' { 
+                      printf("Found identifier list: \n");
+                      for (int i = 0; i < $3->identifiers.size(); ++i) {
+                        printf("%s\n", $3->identifiers[i].c_str());
+                      }
+                    }
                     |  direct_declarator '(' ')'
                     ;
 
-identifier_list     :  ID ',' identifier_list { current_function.parameters.push_back($1); }
-                    |  ID { current_function.parameters.push_back($1); }
+identifier_list     :  identifier_list ',' ID { $1->identifiers.push_back($3); }
+                    |  ID { $$ = new identifier_list(); $$->identifiers.push_back($1); }
                     ;
 
 param_list          :  param_declaration ',' param_list
