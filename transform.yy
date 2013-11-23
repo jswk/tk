@@ -72,7 +72,7 @@ function            :  decl_specifier declarator declaration_list body { printf(
                 		;
 
 decl_specifier      :  TYPE { $$ = new wrappedstring($1); }
-                    |  STRUCTURE ID { $$ = new wrappedstring($1); $$->value.append($2); }
+                    |  STRUCTURE ID { $$ = new wrappedstring($1); $$->value.append(" "); $$->value.append($2); }
 		                ;
 
 declaration_list    :  declaration_list declaration
