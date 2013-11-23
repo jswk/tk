@@ -16,3 +16,10 @@
 *.exe
 *.out
 *.app
+
+lex.yy.c
+.transform.l.swp
+transform
+*.tab.cc
+*.tab.hh
+.yy~
