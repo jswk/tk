@@ -27,9 +27,9 @@ struct declarator {
 };
 
 struct function {
+  function() : decl_specifier(NULL), declarator(NULL), declarations(NULL) {}
   struct wrappedstring *decl_specifier;
   struct declarator *declarator;
-  const char *body;
   struct declaration_list* declarations; // map parameter name to type
   vector<string> parameters;
 };
@@ -169,6 +169,7 @@ function            :  decl_specifier declarator declaration_list body {
                         $$ = new function();
                         $$->decl_specifier = new wrappedstring("void");
                         $$->declarator = $1;
+                        $$->declarations = $2;
                     }
                     |  declarator body { 
                         printf("Znaleziono deklarator %s\n", $1->id->value.c_str()); 
@@ -243,10 +244,6 @@ direct_declarator   :  ID {
                     |  direct_declarator '(' identifier_list ')' { 
                     $1->next = new declarator(3);
                     $1->next->identifier_list = $3;
-                      //printf("Found identifier list: \n");
-                      //for (int i = 0; i < $3->identifiers.size(); ++i) {
-                      //  printf("%s\n", $3->identifiers[i].c_str());
-                      //}
                     }
                     |  direct_declarator '(' ')' {
                     $1->next = new declarator(3);
@@ -320,8 +317,16 @@ int main()
     declarator *param_list_declarator = find_declarator_of_type(fun->declarator, 2);
     old_style = param_list_declarator == NULL;
 
+    struct declaration_list *declaration_list = fun->declarations;
+    bool declarations_present = declaration_list != NULL;
+
+
     if (old_style) {
       cout << "Old style";
+    }
+
+    if (!old_style && declarations_present) {
+      cerr << "Warning: New style function with declaration list present" << endl;
     }
 
     cout << endl;
