@@ -16,13 +16,6 @@ typedef struct node {
   vector<struct node *> children;
 } *pnode;
 
-struct decl_specifier {
-  decl_specifier() : type(0), structure(0), structure_id(0) {}
-  char *type;
-  char *structure;
-  char *structure_id;
-};
-
 struct direct_declarator {
   
 };
@@ -50,12 +43,11 @@ struct wrappedstring {
   char *str;
   struct wrappedstring *nstr;
   struct node *nd;
-  struct decl_specifier *decl_spec;
   struct identifier_list *identifier_list;
 };
 
 %type <str> declarator 
-%type <decl_spec> decl_specifier
+%type <nstr> decl_specifier
 %type <str> function
 %type <nd> direct_declarator
 %type <nstr> direct_abstract_declarator
@@ -73,14 +65,14 @@ functions           :
                     |  function 
                     ;
 
-function            :  decl_specifier declarator declaration_list body { printf("Funkcja %s %s %s -> %s\n", $1->type, $1->structure, $1->structure_id, $2); $$ = $2; }
-                    |  decl_specifier declarator body { printf("Funkcja %s %s %s -> %s\n", $1->type, $1->structure, $1->structure_id, $2); $$ = $2; }
+function            :  decl_specifier declarator declaration_list body { printf("Funkcja %s %s\n", $1->value.c_str(), $2); $$ = $2; }
+                    |  decl_specifier declarator body { printf("Funkcja %s %s\n", $1->value.c_str(), $2); $$ = $2; }
                     |  declarator declaration_list body { printf("3\n"); }
                     |  declarator body { printf("Znaleziono deklarator %s\n", $1); }
                 		;
 
-decl_specifier      :  TYPE { $$ = new decl_specifier(); $$->type = $1; }
-                    |  STRUCTURE ID { $$ = new decl_specifier(); $$->structure = $1; $$->structure_id = $2; }
+decl_specifier      :  TYPE { $$ = new wrappedstring($1); }
+                    |  STRUCTURE ID { $$ = new wrappedstring($1); $$->value.append($2); }
 		                ;
 
 declaration_list    :  declaration_list declaration
