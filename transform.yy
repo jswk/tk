@@ -131,7 +131,7 @@ pointer             :  pointer '*' { $1->value.append("*"); }
                     |  '*' { $$ = new wrappedstring("*"); }
                     ;
 
-body                : BODY { printf("Body\n"); }
+body                :  BODY { printf("Body\n"); }
                     ;
 
 %%
