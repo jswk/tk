@@ -16,8 +16,14 @@ typedef struct node {
   vector<struct node *> children;
 } *pnode;
 
-struct direct_declarator {
-  
+struct declarator {
+  declarator(int type) : type(type) {}
+  int type;
+  int pointer;
+  struct declarator* next;
+  int array;
+  struct param_list* param_list;
+  struct identifier_list* identifier_list;
 };
 
 struct function {
@@ -44,6 +50,7 @@ struct wrappedstring {
   struct wrappedstring *nstr;
   struct node *nd;
   struct identifier_list *identifier_list;
+  int number;
 };
 
 %type <str> declarator 
@@ -58,14 +65,17 @@ struct wrappedstring {
 %token <str> STRUCTURE
 %token <str> ID
 %token <str> BODY
-%token <str> NUM
+%token <number> NUM
 
 %%
 functions           :
                     |  function 
                     ;
 
-function            :  decl_specifier declarator declaration_list body { printf("Funkcja %s %s\n", $1->value.c_str(), $2); $$ = $2; }
+function            :  decl_specifier declarator declaration_list body { 
+                        printf("Funkcja %s %s\n", $1->value.c_str(), $2); 
+                        $$ = $2;
+                    }
                     |  decl_specifier declarator body { printf("Funkcja %s %s\n", $1->value.c_str(), $2); $$ = $2; }
                     |  declarator declaration_list body { printf("3\n"); }
                     |  declarator body { printf("Znaleziono deklarator %s\n", $1); }
@@ -88,18 +98,31 @@ declarator          :  pointer direct_declarator
                     |  direct_declarator
                     ;
 
-direct_declarator   :  ID { $$ = new node(); $$->value = $1; }
-                    |  '(' declarator ')'
-                    |  direct_declarator '[' NUM ']'
-                    |  direct_declarator '[' ']'
-                    |  direct_declarator '(' param_list ')'
-                    |  direct_declarator '(' identifier_list ')' { 
-                      printf("Found identifier list: \n");
-                      for (int i = 0; i < $3->identifiers.size(); ++i) {
-                        printf("%s\n", $3->identifiers[i].c_str());
-                      }
+direct_declarator   :  ID { $$ = new declarator(0); $$->id = $1; }
+                    |  '(' declarator ')' { $$ = $2; }
+                    |  direct_declarator '[' NUM ']' { 
+                    $1->next = new declarator(1);
+                    $1->next->array = $3; 
                     }
-                    |  direct_declarator '(' ')'
+                    |  direct_declarator '[' ']' {
+                    $1->next = new declarator(1);
+                    $1->next->array = -1;
+                    }
+                    |  direct_declarator '(' param_list ')' {
+                    $1->next = new declarator(2);
+                    $1->next->param_list = $3;
+                    }
+                    |  direct_declarator '(' identifier_list ')' { 
+                    $1->next = new declarator(3);
+                    $1->next->identifier_list = $3;
+                      //printf("Found identifier list: \n");
+                      //for (int i = 0; i < $3->identifiers.size(); ++i) {
+                      //  printf("%s\n", $3->identifiers[i].c_str());
+                      //}
+                    }
+                    |  direct_declarator '(' ')' {
+                    $1->next = new declarator(3);
+                    }
                     ;
 
 identifier_list     :  identifier_list ',' ID { $1->identifiers.push_back($3); }
