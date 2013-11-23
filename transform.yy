@@ -1,5 +1,6 @@
 %{
-#include <stdio.h>
+#include <cstdio>
+#include <iostream>
 #include <string>
 #include <vector>
 #include <map>
@@ -11,13 +12,10 @@ using namespace std;
 int yylex(void); 
 int yyerror(const char* s); 
 
-typedef struct node {
-  string value;
-  vector<struct node *> children;
-} *pnode;
 
 struct declarator {
   declarator(int type) : type(type) {}
+  const char *id;
   int type;
   int pointer;
   struct declarator* next;
@@ -27,15 +25,19 @@ struct declarator {
 };
 
 struct function {
-  struct decl_specifier *decl_specifier;
+  struct wrappedstring *decl_specifier;
+  struct declarator *declarator;
+  const char *body;
   map<string, string> parameter_declarations; // map parameter name to type
   vector<string> parameters;
 };
 
-struct function current_function;
-
 struct identifier_list {
   vector<string> identifiers;
+};
+
+struct param_list {
+
 };
 
 struct wrappedstring {
@@ -43,22 +45,27 @@ struct wrappedstring {
   string value;
 };
 
+vector<function *> functions;
+
 %}
 
 %union {
   char *str;
   struct wrappedstring *nstr;
-  struct node *nd;
+  struct function *function;
+  struct declarator *declarator;
   struct identifier_list *identifier_list;
+  struct param_list *param_list;
   int number;
 };
 
-%type <str> declarator 
+%type <declarator> declarator 
 %type <nstr> decl_specifier
-%type <str> function
-%type <nd> direct_declarator
+%type <function> function
+%type <declarator> direct_declarator
 %type <nstr> direct_abstract_declarator
 %type <nstr> pointer
+%type <param_list> param_list
 %type <identifier_list> identifier_list
 
 %token <str> TYPE
@@ -69,16 +76,34 @@ struct wrappedstring {
 
 %%
 functions           :
-                    |  function 
+                    |  functions function { functions.push_back($2); }
+                    |  function { functions.push_back($1); }
                     ;
 
 function            :  decl_specifier declarator declaration_list body { 
-                        printf("Funkcja %s %s\n", $1->value.c_str(), $2); 
-                        $$ = $2;
+                        printf("Funkcja %s %s\n", $1->value.c_str(), $2->id); 
+                        $$ = new function();
+                        $$->decl_specifier = $1;
+                        $$->declarator = $2;
                     }
-                    |  decl_specifier declarator body { printf("Funkcja %s %s\n", $1->value.c_str(), $2); $$ = $2; }
-                    |  declarator declaration_list body { printf("3\n"); }
-                    |  declarator body { printf("Znaleziono deklarator %s\n", $1); }
+                    |  decl_specifier declarator body { 
+                        printf("Funkcja %s %s\n", $1->value.c_str(), $2->id);
+                        $$ = new function();
+                        $$->decl_specifier = $1;
+                        $$->declarator = $2;
+                    }
+                    |  declarator declaration_list body { 
+                        printf("3\n"); 
+                        $$ = new function();
+                        $$->decl_specifier = NULL;
+                        $$->declarator = $1;
+                    }
+                    |  declarator body { 
+                        printf("Znaleziono deklarator %s\n", $1->id); 
+                        $$ = new function();
+                        $$->decl_specifier = NULL;
+                        $$->declarator = $1;
+                    }
                 		;
 
 decl_specifier      :  TYPE { $$ = new wrappedstring($1); }
@@ -169,9 +194,11 @@ int yyerror(const char *s) {
 int main()
 {
   yyparse();
-  for (int i = 0; i < current_function.parameters.size(); ++i)
+
+  for (vector<function *>::iterator iter = functions.begin(); iter != functions.end(); ++iter)
   {
-    printf("p %s\n", current_function.parameters[i].c_str());
+    cout << (*iter)->declarator->id << endl;
   }
+
   return 0;
 }
