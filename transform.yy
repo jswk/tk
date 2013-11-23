@@ -14,7 +14,7 @@ int yyerror(const char* s);
 
 
 struct declarator {
-  declarator(int type) : type(type) {}
+  declarator(int type) : type(type), next(NULL), param_list(NULL), identifier_list(NULL) {}
   const char *id;
   int type;
   int pointer;
@@ -197,7 +197,27 @@ int main()
 
   for (vector<function *>::iterator iter = functions.begin(); iter != functions.end(); ++iter)
   {
-    cout << (*iter)->declarator->id << endl;
+    function *fun = *iter;
+    if (fun->decl_specifier == NULL) { cout << "int "; }
+    else { cout << fun->decl_specifier->value << " "; }
+    cout << fun->declarator->id;
+
+    bool old_style = true;
+    declarator *current = fun->declarator;
+    while (current != NULL) {
+      if (current->param_list != NULL) {
+        old_style = false;
+        // write param list
+        break;
+      }
+      current = current->next;
+    }
+
+    if (old_style) {
+      cout << "Old style";
+    }
+
+    cout << endl;
   }
 
   return 0;
