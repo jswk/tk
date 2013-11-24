@@ -1,3 +1,14 @@
 int asdf(b, c)
 char *b, c[20];
-{}
+{
+    slkdfjsd
+    sdfsdfsdf
+    {
+/// }}}}}}}}}
+/* 
+{{{{{{{
+*/
+    string str = "}";
+    }
+}
+

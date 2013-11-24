@@ -32,6 +32,7 @@ struct function {
   struct declarator *declarator;
   struct declaration_list* declarations; // map parameter name to type
   vector<string> parameters;
+  char* body;
 };
 
 struct identifier_list {
@@ -55,6 +56,7 @@ struct param_list {
 
 struct wrappedstring {
   wrappedstring(const char *val) : value(val) {}
+  wrappedstring(string val) : value(val) {}
   string value;
 };
 
@@ -111,6 +113,7 @@ void handleFunction(struct function* func) {
     for (it = mp->begin(); it != mp->end(); ++it) {
         cout << it->first << ":" << it->second << "\n";
     }
+    cout << func->body << '\n';
 }
 
 %}
@@ -138,6 +141,7 @@ void handleFunction(struct function* func) {
 %type <nstr> pointer
 %type <param_list> param_list
 %type <identifier_list> identifier_list
+%type <str> body
 
 %token <str> TYPE
 %token <str> STRUCTURE
@@ -156,6 +160,7 @@ function            :  decl_specifier declarator declaration_list body {
                         $$->decl_specifier = $1;
                         $$->declarator = $2;
                         $$->declarations = $3;
+                        $$->body = $4;
                         handleFunction($$);
                     }
                     |  decl_specifier declarator body { 
@@ -282,7 +287,7 @@ pointer             :  pointer '*' { $1->value.append("*"); }
                     |  '*' { $$ = new wrappedstring("*"); }
                     ;
 
-body                :  BODY { printf("Body\n"); }
+body                :  BODY 
                     ;
 
 %%
