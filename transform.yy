@@ -269,7 +269,6 @@ direct_declarator   :  ID {
                     |  direct_declarator '(' param_list ')' {
                     $1->next = new declarator(2);
                     $1->next->param_list = $3;
-                    cout << getDeclarationString($1->next, new wrappedstring("")) << endl;
                     }
                     |  direct_declarator '(' identifier_list ')' { 
                     $1->next = new declarator(3);
@@ -384,31 +383,31 @@ int main()
 {
   yyparse();
 
-  for (vector<function *>::iterator iter = functions.begin(); iter != functions.end(); ++iter)
-  {
-    function *fun = *iter;
-    if (fun->decl_specifier == NULL) { cout << "int "; }
-    else { cout << fun->decl_specifier->value << " "; }
-    cout << fun->declarator->id->value;
+ // for (vector<function *>::iterator iter = functions.begin(); iter != functions.end(); ++iter)
+ // {
+ //   function *fun = *iter;
+ //   if (fun->decl_specifier == NULL) { cout << "int "; }
+ //   else { cout << fun->decl_specifier->value << " "; }
+ //   cout << fun->declarator->id->value;
 
-    bool old_style = true;
-    declarator *param_list_declarator = find_declarator_of_type(fun->declarator, 2);
-    old_style = param_list_declarator == NULL;
+ //   bool old_style = true;
+ //   declarator *param_list_declarator = find_declarator_of_type(fun->declarator, 2);
+ //   old_style = param_list_declarator == NULL;
 
-    struct declaration_list *declaration_list = fun->declarations;
-    bool declarations_present = declaration_list != NULL;
+ //   struct declaration_list *declaration_list = fun->declarations;
+ //   bool declarations_present = declaration_list != NULL;
 
 
-    if (old_style) {
-      cout << "Old style";
-    }
+ //   if (old_style) {
+ //     cout << "Old style";
+ //   }
 
-    if (!old_style && declarations_present) {
-      cerr << "Warning: New style function with declaration list present" << endl;
-    }
+ //   if (!old_style && declarations_present) {
+ //     cerr << "Warning: New style function with declaration list present" << endl;
+ //   }
 
-    cout << endl;
-  }
+ //   cout << endl;
+ // }
 
   return 0;
 }
