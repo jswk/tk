@@ -68,6 +68,7 @@ struct param_declaration {
 };
 
 vector<function *> functions;
+bool error = false;
 
 string getDeclarationString(struct declarator* decl, struct wrappedstring* decl_specifier) {
     string out;
@@ -135,6 +136,79 @@ void handleFunction(struct function* func) {
     cout << func->body << '\n';
 }
 
+bool validateFunction(struct function* func) {
+    if (func->declarator == NULL) {
+        cerr << "Function declarator must be set.\n";
+        return false;
+    }
+
+    if (func->body == NULL) {
+        cerr << "Function must have a body.\n";
+        return false;
+    }
+
+    if (func->declarator->type != 0) {
+        cerr << "Function declarator doesn't have id.\n";
+        return false;
+    }
+
+
+    struct declarator *params = func->declarator->next;
+
+    if (params->type == 2) {
+        if (func->declarations != NULL) {
+            cerr << "New style definitions musn't have declarations below function declaration.\n";
+            return false;
+        }
+
+        for (vector<struct param_declaration*>::iterator it = params->param_list->declarations.begin(); it != params->param_list->declarations.end(); ++it) {
+            if ((*it)->declarator != NULL && (*it)->declarator->type != 0) {
+                cerr << "Every parameter must have an id.\n";
+                return false;
+            }
+
+            if ((*it)->decl_specifier == NULL) {
+                cerr << "Every parameter must have a type.\n";
+                return false;
+            }
+
+            if ((*it)->declarator != NULL) {
+                for (vector<struct param_declaration*>::iterator ite = params->param_list->declarations.begin(); ite != it; ++ite) {
+                    if ((*ite)->declarator != NULL && (*it)->declarator->id->value.compare((*ite)->declarator->id->value) == 0) {
+                        cerr << "There is duplicate param " << *it << " in declaration.\n";
+                        return false;
+                    }
+                }
+            }
+        }
+
+    } else if (params->type == 3) {
+        if (params->identifier_list == NULL) {
+            if (func->declarations != NULL) {
+                cerr << "Parameter types declarations present although no identifiers set.\n";
+                return false;
+            }
+        } else {
+            if (func->declarations == NULL || func->declarations->declarations.size() != params->identifier_list->identifiers.size()) {
+                cerr << "Parameter identifiers count must equal the count of defined parameters.\n";
+                return false;
+            }
+
+            for (vector<string>::iterator it = params->identifier_list->identifiers.begin(); it != params->identifier_list->identifiers.end(); ++it) {
+                if (func->declarations->declarations.count(*it) == 0) {
+                    cerr << "Parameter " << *it << " couldn't be found among declarations.\n";
+                    return false;
+                }
+            }
+        }
+    } else {
+        cerr << "Invalid params declarator type.\n";
+        return false;
+    }
+
+    return true;
+}
+
 %}
 
 %union {
@@ -174,12 +248,18 @@ void handleFunction(struct function* func) {
 %%
 functions           :
                     |  functions function {
-                        functions.push_back($2); 
-                        handleFunction($2);
+                        functions.push_back($2);
+                        if (!error) error = !validateFunction($2);
+                        if (!error) handleFunction($2);
+
+                        error = false;
                     }
                     |  function { 
                         functions.push_back($1); 
-                        handleFunction($1);
+                        if (!error) error = !validateFunction($1);
+                        if (!error) handleFunction($1);
+
+                        error = false;
                     }
                     ;
 
@@ -194,17 +274,20 @@ function            :  decl_specifier declarator declaration_list body {
                         $$ = new function();
                         $$->decl_specifier = $1;
                         $$->declarator = $2;
+                        $$->body = $3;
                     }
                     |  declarator declaration_list body { 
                         $$ = new function();
                         $$->decl_specifier = new wrappedstring("void");
                         $$->declarator = $1;
                         $$->declarations = $2;
+                        $$->body = $3;
                     }
                     |  declarator body { 
                         $$ = new function();
                         $$->decl_specifier = new wrappedstring("void");
                         $$->declarator = $1;
+                        $$->body = $2;
                     }
                 		;
 
@@ -220,6 +303,8 @@ declaration_list    :  declaration_list declaration {
                             ret = $$->declarations.insert(pair<string,string>((*it)->id->value, getDeclarationString(*it, $2->decl_specifier)));
                             if (ret.second == false) {
                                 $$->duplicate = true;
+                                cerr << "Duplicate parameter " << (*it)->id->value << " has been detected.\n";
+                                error = true;
                             }
                         }
                     }
@@ -231,6 +316,8 @@ declaration_list    :  declaration_list declaration {
                             ret = $$->declarations.insert(pair<string,string>((*it)->id->value, getDeclarationString(*it, $1->decl_specifier)));
                             if (ret.second == false) {
                                 $$->duplicate = true;
+                                cerr << "Duplicate parameter " << (*it)->id->value << " has been detected.\n";
+                                error = true;
                             }
                         }
                     }
