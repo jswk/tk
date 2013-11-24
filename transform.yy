@@ -113,6 +113,15 @@ string getDeclarationString(struct declarator* decl, struct wrappedstring* decl_
     return out;
 }
 
+string getParamListAsString(struct param_list *param_list) {
+  string out = "";
+  for (vector<struct param_declaration *>::iterator declaration = param_list->declarations.begin(); declaration != param_list->declarations.end(); ++declaration) {
+    out += getDeclarationString((*declaration)->declarator, (*declaration)->decl_specifier);
+    out += ", ";
+  }
+  return out.substr(0, out.size() - 2); // remove last ,_ from out
+}
+
 void handleFunction(struct function* func) {
     printf("Funkcja %s %s\n", func->decl_specifier->value.c_str(), func->declarator->id->value.c_str());
     cout << getDeclarationString(func->declarator, func->decl_specifier) << endl;
@@ -145,11 +154,12 @@ void handleFunction(struct function* func) {
 %type <nstr> decl_specifier
 %type <function> function
 %type <declarator> direct_declarator
-%type <nstr> direct_abstract_declarator
 %type <nstr> pointer
 %type <param_list> param_list
 %type <identifier_list> identifier_list
 %type <param_declaration> param_declaration
+%type <nstr> abstract_declarator
+%type <nstr> direct_abstract_declarator
 
 %token <str> TYPE
 %token <str> STRUCTURE
@@ -293,18 +303,52 @@ param_declaration   :  decl_specifier declarator {
                     ;
 
 abstract_declarator :  pointer
-                    |  pointer direct_abstract_declarator
+                    |  pointer direct_abstract_declarator {
+                        $$ = new wrappedstring("");
+                        $$->value.append($1->value);
+                        $$->value.append($2->value);
+                    }
                     |  direct_abstract_declarator
                     ;
 
-direct_abstract_declarator  :  '(' abstract_declarator ')'
-                            |  direct_abstract_declarator '[' NUM ']'
-                            |  '[' NUM ']'
-                            |  direct_abstract_declarator '(' param_list ')'
-                            |  direct_abstract_declarator '[' ']'
-                            |  direct_abstract_declarator '(' ')'
-                            |  '(' param_list ')'
-                            |  '(' ')'
+direct_abstract_declarator  :  '(' abstract_declarator ')' {
+                                $$ = new wrappedstring("(");
+                                $$->value.append($2->value);
+                                $$->value.append(")");
+                            }
+                            |  direct_abstract_declarator '[' NUM ']' {
+                                char number[256];
+                                sprintf(number, "%d", $3);
+                                $1->value.append("[");
+                                $1->value.append(number);
+                                $1->value.append("]");
+                            }
+                            |  '[' NUM ']' {
+                                char number[256];
+                                sprintf(number, "%d", $2);
+                                $$ = new wrappedstring("[");
+                                $$->value.append(number);
+                                $$->value.append("]");
+                            }
+                            |  direct_abstract_declarator '(' param_list ')' {
+                                $1->value.append("(");
+                                $1->value.append(getParamListAsString($3));
+                                $1->value.append(")");
+                            }
+                            |  direct_abstract_declarator '[' ']' {
+                                $1->value.append("[]");
+                            }
+                            |  direct_abstract_declarator '(' ')' {
+                                $1->value.append("()");
+                            }
+                            |  '(' param_list ')' {
+                                $$ = new wrappedstring("(");
+                                $$->value.append(getParamListAsString($2));
+                                $$->value.append(")");
+                            }
+                            |  '(' ')' {
+                                $$ = new wrappedstring("()");
+                            }
                             ;
 
 pointer             :  pointer '*' { $1->value.append("*"); }
