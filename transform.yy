@@ -94,13 +94,14 @@ functions           :
                     ;
 
 function            :  decl_specifier declarator declaration_list body { 
-                        printf("Funkcja %s %s\n", $1->value.c_str(), $2->id); 
+                        printf("Funkcja 1 %s %s\n", $1->value.c_str(), $2->id); 
                         $$ = new function();
                         $$->decl_specifier = $1;
                         $$->declarator = $2;
+                        $$->declaration = $3;
                     }
                     |  decl_specifier declarator body { 
-                        printf("Funkcja %s %s\n", $1->value.c_str(), $2->id);
+                        printf("Funkcja 2 %s %s\n", $1->value.c_str(), $2->id);
                         $$ = new function();
                         $$->decl_specifier = $1;
                         $$->declarator = $2;
@@ -110,6 +111,7 @@ function            :  decl_specifier declarator declaration_list body {
                         $$ = new function();
                         $$->decl_specifier = NULL;
                         $$->declarator = $1;
+                        $$->declaration = $2;
                     }
                     |  declarator body { 
                         printf("Znaleziono deklarator %s\n", $1->id); 
@@ -237,8 +239,16 @@ int main()
     declarator *param_list_declarator = find_declarator_of_type(fun->declarator, 2);
     old_style = param_list_declarator == NULL;
 
+    declaration *declarations = fun->declaration;
+    bool declarations_present = declarations != NULL;
+
+
     if (old_style) {
       cout << "Old style";
+    }
+
+    if (!old_style && declarations_present) {
+      cerr << "Warning: New style function with declaration list present" << endl;
     }
 
     cout << endl;
