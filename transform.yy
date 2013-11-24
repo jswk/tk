@@ -152,14 +152,6 @@ void handleFunction(struct function* func) {
       struct declaration_list *declaration_list = func->declarations;
       bool declarations_present = declaration_list != NULL;
 
-      if (old_style && !declarations_present) {
-        cerr << "Error: Old style function without declarations present" << endl;
-      }
-
-      if (!old_style && declarations_present) {
-        cerr << "Error: New style function with with declarations list" << endl;
-      }
-
       if (old_style) {
         cout << "(";
 
@@ -168,6 +160,10 @@ void handleFunction(struct function* func) {
         identifier_list *identifier_list = identifier_list_declarator->identifier_list;
 
         if (identifier_list != NULL) {
+
+          if (old_style && !declarations_present) {
+            cerr << "Error: Old style function without declarations present" << endl;
+          }
 
           string converted_identifiers = "";
           struct declaration_list* declarations = func->declarations;
@@ -185,6 +181,9 @@ void handleFunction(struct function* func) {
 
         cout << ")" << endl;
       } else { // In new style function everything should be already printed
+        if (declarations_present) {
+          cerr << "Error: New style function with declarations list" << endl;
+        }
         cout << endl;
       }
       cout << func->body << '\n';
@@ -415,7 +414,7 @@ pointer             :  pointer '*' { $1->value.append("*"); }
                     |  '*' { $$ = new wrappedstring("*"); }
                     ;
 
-body                :  BODY 
+body                :  BODY
                     ;
 
 %%
