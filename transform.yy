@@ -24,9 +24,18 @@ struct declarator {
   struct identifier_list* identifier_list;
 };
 
-struct function {
+struct declaration {
+  declaration() : next(NULL), declarator(NULL) {}
   struct wrappedstring *decl_specifier;
   struct declarator *declarator;
+  struct declaration *next;
+};
+
+struct function {
+  function() : decl_specifier(NULL), declarator(NULL), declaration(NULL) {}
+  struct wrappedstring *decl_specifier;
+  struct declarator *declarator;
+  struct declaration *declaration;
   const char *body;
   map<string, string> parameter_declarations; // map parameter name to type
   vector<string> parameters;
@@ -54,6 +63,7 @@ vector<function *> functions;
   struct wrappedstring *nstr;
   struct function *function;
   struct declarator *declarator;
+  struct declaration *declaration;
   struct identifier_list *identifier_list;
   struct param_list *param_list;
   int number;
@@ -63,6 +73,9 @@ vector<function *> functions;
 %type <nstr> decl_specifier
 %type <function> function
 %type <declarator> direct_declarator
+%type <declarator> declarator_list
+%type <declaration> declaration
+%type <declaration> declaration_list
 %type <nstr> direct_abstract_declarator
 %type <nstr> pointer
 %type <param_list> param_list
@@ -110,13 +123,24 @@ decl_specifier      :  TYPE { $$ = new wrappedstring($1); }
                     |  STRUCTURE ID { $$ = new wrappedstring($1); $$->value.append(" "); $$->value.append($2); }
 		                ;
 
-declaration_list    :  declaration_list declaration
-                    |  declaration
+declaration_list    :  declaration_list declaration { $1->next = $2; }
+                    |  declaration 
+                    ;
 
-declaration         :  decl_specifier declarator_list ';'
-                    |  decl_specifier ';'
+declaration         :  decl_specifier declarator_list ';' { 
+                        $$ = new declaration(); 
+                        $$->decl_specifier = $1;
+                        $$->declarator = $2;
+                      }
+                    |  decl_specifier ';' {
+                        $$ = new declaration();
+                        $$->decl_specifier = $1;
+                      }
+                    ;
 
-declarator_list     :  declarator ',' declarator_list
+declarator_list     :  declarator ',' declarator_list {
+                        $1->next = $3;
+                      }
                     |  declarator
 
 declarator          :  pointer direct_declarator 
@@ -140,10 +164,6 @@ direct_declarator   :  ID { $$ = new declarator(0); $$->id = $1; }
                     |  direct_declarator '(' identifier_list ')' { 
                     $1->next = new declarator(3);
                     $1->next->identifier_list = $3;
-                      //printf("Found identifier list: \n");
-                      //for (int i = 0; i < $3->identifiers.size(); ++i) {
-                      //  printf("%s\n", $3->identifiers[i].c_str());
-                      //}
                     }
                     |  direct_declarator '(' ')' {
                     $1->next = new declarator(3);
