@@ -2,10 +2,10 @@
 #include <cstdio>
 #include <iostream>
 #include <string>
-#include <vector>
 #include <map>
 #include <set>
 #include <sstream>
+#include <vector>
 
 extern "C"  {int yyparse(void); int yywrap() { return 1; }}
 
@@ -16,7 +16,8 @@ int yyerror(const char* s);
 
 
 struct declarator {
-  declarator(int type) : type(type), next(NULL), param_list(NULL), identifier_list(NULL) {}
+  declarator(int type) : type(type), next(NULL), param_list(NULL), identifier_list(NULL),
+                        id(NULL), decl_specifier(NULL), pointer(NULL), array(0) {}
   struct wrappedstring *id;
   int type;
   struct wrappedstring *decl_specifier;
