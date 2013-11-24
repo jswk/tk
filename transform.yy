@@ -70,6 +70,17 @@ struct param_declaration {
 vector<function *> functions;
 bool error = false;
 
+struct declarator *findFirstDeclaratorOfType(struct declarator *first, int type) {
+  declarator *current = first;
+  while (current != NULL) {
+    if (current->type == type) {
+      return current;
+    }
+    current = current->next;
+  }
+  return NULL;
+}
+
 string getDeclarationString(struct declarator* decl, struct wrappedstring* decl_specifier) {
     string out;
     struct declarator* curr = decl;
@@ -98,7 +109,7 @@ string getDeclarationString(struct declarator* decl, struct wrappedstring* decl_
                 }
             break;
             case 2:
-                out += " (";
+                out += "(";
                 for (vector<struct param_declaration*>::iterator it = curr->param_list->declarations.begin(); it != curr->param_list->declarations.end(); ++it) {
                     if (del) out += ", ";
                     out += getDeclarationString((*it)->declarator, (*it)->decl_specifier);
@@ -108,6 +119,7 @@ string getDeclarationString(struct declarator* decl, struct wrappedstring* decl_
             break;
             case 3:
                 // this should throw syntax error or something
+                // nope, it's all right. At least for topmost functions
             break;
         }
         curr = curr->next;
@@ -126,14 +138,57 @@ string getParamListAsString(struct param_list *param_list) {
 }
 
 void handleFunction(struct function* func) {
-    printf("Funkcja %s %s\n", func->decl_specifier->value.c_str(), func->declarator->id->value.c_str());
-    cout << getDeclarationString(func->declarator, func->decl_specifier) << endl;
+    if (true) { // TODO Change to checking global variable state
+
+      cout << getDeclarationString(func->declarator, func->decl_specifier);
  //   map<string, string>* mp = &func->declarations->declarations;
  //   map<string, string>::iterator it;
  //   for (it = mp->begin(); it != mp->end(); ++it) {
  //       cout << it->first << ":" << it->second << "\n";
  //   }
-    cout << func->body << '\n';
+      bool old_style = true;
+      declarator *param_list_declarator = findFirstDeclaratorOfType(func->declarator, 2);
+      old_style = param_list_declarator == NULL;
+
+      struct declaration_list *declaration_list = func->declarations;
+      bool declarations_present = declaration_list != NULL;
+
+      if (old_style) {
+        cout << "(";
+
+        // Magic happens here, kids
+        declarator *identifier_list_declarator = findFirstDeclaratorOfType(func->declarator, 3);
+        identifier_list *identifier_list = identifier_list_declarator->identifier_list;
+
+        if (identifier_list != NULL) {
+
+          if (old_style && !declarations_present) {
+            cerr << "Error: Old style function without declarations present" << endl;
+          }
+
+          string converted_identifiers = "";
+          struct declaration_list* declarations = func->declarations;
+
+          for (vector<string>::iterator iter = identifier_list->identifiers.begin(); iter != identifier_list->identifiers.end(); ++iter) {
+            string mapped = declarations->declarations.find(*iter)->second;
+            converted_identifiers += mapped;
+            converted_identifiers += ", ";
+          }
+          converted_identifiers = converted_identifiers.substr(0, converted_identifiers.size() - 2);
+          cout << converted_identifiers;
+        } else {
+          cout << "void";
+        }
+
+        cout << ")" << endl;
+      } else { // In new style function everything should be already printed
+        if (declarations_present) {
+          cerr << "Error: New style function with declarations list" << endl;
+        }
+        cout << endl;
+      }
+      cout << func->body << '\n';
+    }
 }
 
 bool validateFunction(struct function* func) {
@@ -446,21 +501,11 @@ pointer             :  pointer '*' { $1->value.append("*"); }
                     |  '*' { $$ = new wrappedstring("*"); }
                     ;
 
-body                :  BODY 
+body                :  BODY
                     ;
 
 %%
 
-struct declarator *find_declarator_of_type(struct declarator *first, int type) {
-  declarator *current = first;
-  while (current != NULL) {
-    if (current->type == type) {
-      return current;
-    }
-    current = current->next;
-  }
-  return NULL;
-}
 
 int yyerror(const char *s) {
   printf("blad: %s\n", s);
