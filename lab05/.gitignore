@@ -1,29 +1,11 @@
-# Object files
-*.o
-*.ko
+# virtualenv
+Include
+Lib
+Scripts
 
-# Libraries
-*.lib
-*.a
-
-# Shared objects (inc. Windows DLLs)
-*.dll
-*.so
-*.so.*
-*.dylib
-
-# Executables
-*.exe
-*.out
-*.app
-
-lex.yy.c
-.transform.l.swp
-transform
-*.tab.cc
-*.tab.hh
-.yy~
-
+# PLY output
 parser.out
 parsetab.py
-__pycache__
+
+# compiled python files
+*.pyc
