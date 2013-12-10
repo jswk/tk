@@ -1,0 +1,6 @@
+int max(a,b,c)
+int a,b,c;
+{
+  /* body */ 
+}
+                            

@@ -1,0 +1,26 @@
+char nazwa(a,b)
+int a, b, *a[20];
+{ }
+int nazwa2(b,c)
+int b;
+char c, b;
+{ }
+int nazwa3(a,a)
+int a;
+{}
+int nazwa4(a,b)
+char c;
+{}
+int nazwa5()
+{}
+int nazwa6()
+int b;
+{}
+int nazwa6(a)
+{}
+int nowa(int b)
+{}
+int nowa1(int b)
+char b;
+{}
+
