@@ -22,5 +22,9 @@ class TreePrinter:
         pass
         # ...
 
+    @addToClass(AST.Fundef)
+    def printTree(self):
+        print("ASDF")
+
     # @addToClass ...
     # ...
