@@ -44,6 +44,11 @@ class Funcall(Node):
         self.args = args
 
 class Declaration(Node):
+    def __init__(self, type, inits):
+        self.type = type
+        self.inits = inits
+
+class Init(Node):
     def __init__(self, name, value):
         self.name = name
         self.value = value
@@ -58,6 +63,10 @@ class While(Node):
     def __init__(self, condition, body):
         self.condition = condition
         self.body = body
+
+class Error(Node):
+    def __init__(self, message):
+        self.message = message
 
 # ...
 
