@@ -6,15 +6,18 @@ class Node(object):
 
 
 class Const(Node):
-    pass
+    def __init__(self, value):
+        self.value = value
 
 
 class Integer(Const):
-    pass
+    def __init__(self, value):
+        Const.__init__(self, int(value))
 
 
 class Float(Const):
-    pass
+    def __init__(self, value):
+        Const.__init__(self, float(value))
 
 
 class String(Const):
@@ -22,8 +25,13 @@ class String(Const):
 
 
 class Variable(Node):
-    pass
+    def __init__(self, id):
+        self.id = id
 
+class Arg(Node):
+    def __init__(self, type, id):
+        self.type = type
+        self.id = id
 
 class BinExpr(Node):
     def __init__(self, left, operator, right):
@@ -64,9 +72,43 @@ class While(Node):
         self.condition = condition
         self.body = body
 
+class Repeat(Node):
+    def __init__(self, body, until):
+        self.body = body
+        self.until = until
+
 class Error(Node):
     def __init__(self, message):
         self.message = message
+
+class CompoundInstruction(Node):
+    def __init__(self, decls, instrs):
+        self.decls = decls
+        self.instrs = instrs
+
+class Assignment(Node):
+    def __init__(self, id, expr):
+        self.id = id
+        self.expr = expr
+
+class Print(Node):
+    def __init__(self, expr):
+        self.expr = expr
+
+class LabeledInstr(Node):
+    def __init__(self, label, instr):
+        self.label = label
+        self.instr = instr
+
+class Return(Node):
+    def __init__(self, expr):
+        self.expr = expr
+
+class Continue(Node):
+    pass
+
+class Break(Node):
+    pass
 
 # ...
 

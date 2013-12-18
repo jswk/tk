@@ -22,19 +22,62 @@ class TreePrinter:
 
     @addToClass(AST.BinExpr)
     def printTree(self):
-        return "BinExpr"
+        return self.operator+"\n"+indent(str(self.left)+"\n"+str(self.right))
 
     @addToClass(AST.Fundef)
     def printTree(self):
-        return "Fundef"
+        return "FUNDEF\n"+"\n".join([indent(str(el)) for el in [self.name, "RET "+self.return_type] + self.arguments]) + "\n" + indent(str(self.body))
 
     @addToClass(AST.Declaration)
     def printTree(self):
-        return "DECL\n"+"\n".join([indent(init.__str__()) for init in self.inits])
+        return "DECL\n"+"\n".join([indent(str(init)) for init in self.inits])
 
     @addToClass(AST.Init)
     def printTree(self):
-        return "=\n"+indent(self.name.__str__())+"\n"+indent(self.value.__str__())
+        return "=\n"+indent(str(self.name))+"\n"+indent(str(self.value))
+
+    @addToClass(AST.CompoundInstruction)
+    def printTree(self):
+        return "\n".join([str(el) for el in self.decls + self.instrs])
+
+    @addToClass(AST.Arg)
+    def printTree(self):
+        return "ARG " + str(self.id)
+
+    @addToClass(AST.Variable)
+    def printTree(self):
+        return self.id
+
+    @addToClass(AST.Const)
+    def printTree(self):
+        return str(self.value)
+
+    @addToClass(AST.If)
+    def printTree(self):
+        out = "IF\n"+indent(str(self.condition)+"\n"+str(self.block_if))
+        if self.block_else != None:
+            out = out+"\n"+"ELSE\n"+indent(str(self.block_else))
+        return out
+
+    @addToClass(AST.Assignment)
+    def printTree(self):
+        return "=\n"+indent(str(self.id)+"\n"+str(self.expr))
+
+    @addToClass(AST.Funcall)
+    def printTree(self):
+        return "FUNCALL\n"+indent("\n".join([str(el) for el in [self.name]+self.args]))
+
+    @addToClass(AST.Print)
+    def printTree(self):
+        return "PRINT\n"+indent(str(self.expr))
+
+    @addToClass(AST.Return)
+    def printTree(self):
+        return "RETURN\n"+indent(str(self.expr))
+
+    @addToClass(AST.While)
+    def printTree(self):
+        return "WHILE\n"+indent("\n".join([str(el) for el in [self.condition, self.body]]))
 
     # @addToClass ...
     # ...
