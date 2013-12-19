@@ -1,0 +1,8 @@
+string myfun() {
+  int x = 0;
+  repeat {
+    print "Hello" + 2;
+    x = x & 666;
+  } until x;
+}
+
