@@ -88,6 +88,13 @@ class Scanner(object):
   
   t_NEQ = r"!="
 
+  t_AND = r"&&"
+
+  t_OR = r"\|\|"
+
+  t_SHL = r"<<"
+
+  t_SHR = r">>"
 
   def t_TYPE(self,t):
       r"\b(int|float|string)\b"

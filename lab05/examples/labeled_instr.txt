@@ -2,9 +2,14 @@ string myfun() {
   a : print "hello";
   b : {
     print "yoyoy";
-    a = a + 5;
+    a = a & 5;
   }
   return "ASDF";
 }
 
 e = myfun();
+
+repeat {
+       print "HELLO";
+} until (a && 5 || b != 5);
+
