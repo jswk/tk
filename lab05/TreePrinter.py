@@ -91,5 +91,9 @@ class TreePrinter:
     def printTree(self):
         return "CONTINUE"
 
+    @addToClass(AST.LabeledInstr)
+    def printTree(self):
+        return "LABELED-INSTR\n" + self.label + "\n" + indent(str(self.instr))
+
     # @addToClass ...
     # ...
