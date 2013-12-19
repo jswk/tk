@@ -1,0 +1,15 @@
+int myfun () {
+
+repeat {
+  print "ASDF";
+  if (x > 666)
+    print "YO";
+  else if (a == 6)
+    print "NO";
+  else
+    print "YUP";
+} until (a > 6);
+  return 3;
+}
+
+a = myfun();
