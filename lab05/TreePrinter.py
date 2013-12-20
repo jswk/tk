@@ -93,7 +93,7 @@ class TreePrinter:
 
     @addToClass(AST.LabeledInstr)
     def printTree(self):
-        return "LABELED-INSTR\n" + self.label + "\n" + indent(str(self.instr))
+        return "LABELED-INSTR\n" + indent(self.label) + "\n" + indent(str(self.instr))
 
     @addToClass(AST.Error)
     def printTree(self):

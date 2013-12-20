@@ -40,9 +40,9 @@ class Cparser(object):
 
     def p_program(self, p):
         """program : declarations fundefs instructions"""
-        print("".join([decl.__str__()   for decl   in p[1]]))
-        print("".join([fundef.__str__() for fundef in p[2]]))
-        print("".join([instr.__str__()  for instr  in p[3]]))
+        print("\n".join([str(decl)   for decl   in p[1]]+
+                        [str(fundef) for fundef in p[2]]+
+                        [str(instr)  for instr  in p[3]]))
 
 
     def p_declarations(self, p):
@@ -80,11 +80,11 @@ class Cparser(object):
 
     def p_instructions(self, p):
         """instructions : instructions instruction
-                        | instruction """
+                        | """
         try:
             p[0] = p[1] + [p[2]]
         except IndexError:
-            p[0] = [p[1]]
+            p[0] = []
 
 
     def p_instruction(self, p):
