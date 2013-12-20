@@ -35,7 +35,7 @@ class Cparser(object):
         if p:
             print("Syntax error at line {0}, column {1}: LexToken({2}, '{3}')".format(p.lineno, self.scanner.find_tok_column(p), p.type, p.value))
         else:
-            print('At end of input')
+            print('At end of input\nMost likely you haven\'t included a single instruction')
 
 
     def p_program(self, p):
@@ -80,11 +80,11 @@ class Cparser(object):
 
     def p_instructions(self, p):
         """instructions : instructions instruction
-                        | """
+                        | instruction """
         try:
             p[0] = p[1] + [p[2]]
         except IndexError:
-            p[0] = []
+            p[0] = [p[1]]
 
 
     def p_instruction(self, p):
