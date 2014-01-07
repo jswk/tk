@@ -2,13 +2,12 @@
 import sys
 import ply.yacc as yacc
 from Cparser import Cparser
-import TreePrinter
-
+from TypeChecker import TypeChecker
 
 if __name__ == '__main__':
 
     try:
-        filename = sys.argv[1] if len(sys.argv) > 1 else "examples/example.txt"
+        filename = sys.argv[1] if len(sys.argv) > 1 else "example.txt"
         file = open(filename, "r")
     except IOError:
         print("Cannot open {0} file".format(filename))
@@ -19,3 +18,5 @@ if __name__ == '__main__':
     text = file.read()
     parser.parse(text, lexer=Cparser.scanner)
 
+    ast = parser.parse(text, lexer=Cparser.scanner)
+    ast.accept(TypeChecker())
