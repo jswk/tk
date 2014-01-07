@@ -1,6 +1,7 @@
 
 import sys
 import ply.yacc as yacc
+import TreePrinter
 from Cparser import Cparser
 from TypeChecker import TypeChecker
 

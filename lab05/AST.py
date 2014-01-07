@@ -1,6 +1,12 @@
 
 class Node(object):
 
+    def accept(self, visitor):
+        className = self.__class__.__name__
+        method = getattr(visitor, 'visit_' + className, None)
+        if method != None:
+            return method(self)
+
     def __str__(self):
         return self.printTree()
 
@@ -109,6 +115,12 @@ class Continue(Node):
 
 class Break(Node):
     pass
+
+class AST(Node):
+    def __init__(self, decl, fundef, instr):
+        self.decl = decl
+        self.fundef = fundef
+        self.instr = instr
 
 # ...
 

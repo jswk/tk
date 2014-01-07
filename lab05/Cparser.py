@@ -43,6 +43,7 @@ class Cparser(object):
         print("\n".join([str(decl)   for decl   in p[1]]+
                         [str(fundef) for fundef in p[2]]+
                         [str(instr)  for instr  in p[3]]))
+        p[0] = AST.AST(p[1], p[2], p[3])
 
 
     def p_declarations(self, p):
