@@ -18,7 +18,14 @@ class SymbolTable(object):
         self.symbols[name] = symbol
 
     def get(self, name):
-        return self.symbols[name]
+        try:
+            return self.symbols[name]
+        except(KeyError):
+            if self.parent is not None:
+                return self.parent.get(name)
+
+    def getDirect(self, name):
+        return self.symbols.get(name)
 
     def getParentScope(self):
         return self.parent
