@@ -73,21 +73,35 @@ class TypeChecker(object):
         self.scope = SymbolTable(None, 'global')
         
     def visit_BinExpr(self, node):
+        type1 = type2 = None
         if type(node.left) == str:
-            type1 = self.scope.get(node.left).accept(self)
+            left_node = self.scope.get(node.left)
         else:
-            type1 = node.left.accept(self)
+            left_node = node.left
+
+        if left_node is None:
+            print(self.scope.symbols)
+            print("Undefined variable {0}".format(node.left))
+        else:
+            type1 = left_node.accept(self)
 
         if type(node.right) == str:
-            type1 = self.scope.get(node.right).accept(self)
+            right_node = self.scope.get(node.right)
         else:
-            type2 = node.right.accept(self)
+            right_node = node.right
+
+        if right_node is None:
+            print("Undefined variable {0}".format(node.right))
+        else:
+            type2 = right_node.accept(self)
+
         op = node.operator
+
         if type1 is None or type2 is None:
             return None
 
         try:
-            return ttype[(op, type1, type2)]
+            return TypeChecker.ttype[(op, type1, type2)]
         except(KeyError):
             print("Cannot evaluate {0} {1} {2} - incompatible types".format(type1, op, type2))
         return None
@@ -98,6 +112,18 @@ class TypeChecker(object):
             print("Condition must evaluate to integer")
         node.block_if.accept(self)
         node.block_else.accept(self)
+
+    def visit_While(self, node):
+        condition_type = node.condition.accept(self)
+        if condition_type != 'int':
+            print("Condition must evaluate to integer")
+        node.body.accept(self)
+
+    def visit_Repeat(self, node):
+        condition_type = node.condition.accept(self)
+        if condition_type != 'int':
+            print("Condition must evaluate to integer")
+        node.body.accept(self)
 
     def visit_Fundef(self, node):
         if self.scope.getDirect(node.name) is None:
@@ -116,6 +142,21 @@ class TypeChecker(object):
         
     def visit_Arg(self, node):
         self.scope.put(node.id, node)
+        return node.type
+
+    def visit_Declaration(self, node):
+        for init in node.inits:
+            self.scope.put(init.name.id, init)
+            init.accept(self)
+
+    def visit_Init(self, node):
+        declaration = self.scope.get(node.name.id)
+        if declaration is None:
+            print("Undefined variable {0}".format(node.name))
+            return None
+
+        return node.value.accept(self)
+        
 
     def visit_CompoundInstruction(self, node):
         for declaration in node.decls:
@@ -148,6 +189,8 @@ class TypeChecker(object):
     def visit_AST(self, node):
         for fundef in node.fundef:
             fundef.accept(self)
+        for decl in node.decl:
+            decl.accept(self)
         for instr in node.instr:
             instr.accept(self)
         
