@@ -155,7 +155,6 @@ class TypeChecker(object):
             init_type = init.accept(self)
             if init_type != node.type and not TypeChecker.conversion_possible(init_type, node.type):
                 print("Cannot convert {0} to {1}".format(init_type, node.type))
-                
 
     def visit_Init(self, node):
         declaration = self.scope.get(node.name.id)
@@ -194,7 +193,7 @@ class TypeChecker(object):
                 return None
             passed_argument_type = passed_argument.accept(self)
             if passed_argument_type != defined_argument.type and not TypeChecker.conversion_possible(passed_argument_type, defined_argument.type):
-                print("Cannot convert {0} to {1}".format(passed_argument_type, defined_argument_type))
+                print("Cannot convert {0} to {1}".format(passed_argument_type, defined_argument.type))
                 return None
         return function.return_type
 
@@ -232,10 +231,10 @@ class TypeChecker(object):
         return 'string'
 
     def visit_AST(self, node):
-        for fundef in node.fundef:
-            fundef.accept(self)
         for decl in node.decl:
             decl.accept(self)
+        for fundef in node.fundef:
+            fundef.accept(self)
         for instr in node.instr:
             instr.accept(self)
         

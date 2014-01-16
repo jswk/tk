@@ -1,0 +1,8 @@
+int a = 6;
+
+int fun(int a)
+{
+	return 666;
+}
+
+a = fun("asdf");

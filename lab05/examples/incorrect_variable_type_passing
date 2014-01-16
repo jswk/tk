@@ -1,0 +1,9 @@
+int a = 6;
+string asdf = "adsf";
+
+int fun(int a)
+{
+	return 666;
+}
+
+a = fun(asdf);
