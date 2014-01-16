@@ -173,7 +173,6 @@ class TypeChecker(object):
             instruction.accept(self)
 
     def visit_Funcall(self, node):
-        print("Visiting function")
         function = self.scope.get(node.name)
         if function is None:
             print("Function {0} does not exist".format(function.name))
@@ -182,7 +181,22 @@ class TypeChecker(object):
         if len(function.arguments) != len(node.args):
             print("Incorrect number of arguments. {0} requires {1}, {2} provided".format(function.name, len(function.arguments), len(node.args)))
             return None
-        # zip reduce
+        
+        # zip reduce because map reduce is for suckers
+        arg_pairs = zip(node.args, function.arguments)
+        for pair in arg_pairs:
+            passed_argument = pair[0]
+            defined_argument = pair[1]
+            if type(passed_argument) == str: # variable name
+                passed_argument = self.scope.get(passed_argument)
+            if passed_argument is None:
+                print("Undefined variable {0}".format(pair[0]))
+                return None
+            passed_argument_type = passed_argument.accept(self)
+            if passed_argument_type != defined_argument.type and not TypeChecker.conversion_possible(passed_argument_type, defined_argument.type):
+                print("Cannot convert {0} to {1}".format(passed_argument_type, defined_argument_type))
+                return None
+        return function.return_type
 
     def visit_Assignment(self, node):
         variable = self.scope.get(node.id.id) # node.id is in fact Variable
@@ -200,6 +214,9 @@ class TypeChecker(object):
             return None
 
         assigned_type = expression_node.accept(self)
+        if assigned_type is None:
+            return None
+
         if assigned_type != variable.type and not TypeChecker.conversion_possible(assigned_type, variable.type):
             print("Cannot assign {0} to {1}".format(assigned_type, variable.type))
             return None
