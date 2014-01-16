@@ -69,19 +69,22 @@ class TypeChecker(object):
     tconv = {}
     tconv[('int', 'float')] = True
 
+    def conversion_possible(type1, type2):
+        return TypeChecker.tconv.get((type1, type2)) is not None
+
     def __init__(self):
         self.scope = SymbolTable(None, 'global')
         
     def visit_BinExpr(self, node):
         type1 = type2 = None
-        if type(node.left) == str:
+        if type(node.left) == str:  # it's string if it's variable name
             left_node = self.scope.get(node.left)
         else:
             left_node = node.left
 
         if left_node is None:
-            print(self.scope.symbols)
             print("Undefined variable {0}".format(node.left))
+            return None
         else:
             type1 = left_node.accept(self)
 
@@ -92,6 +95,7 @@ class TypeChecker(object):
 
         if right_node is None:
             print("Undefined variable {0}".format(node.right))
+            return None
         else:
             type2 = right_node.accept(self)
 
@@ -146,9 +150,10 @@ class TypeChecker(object):
 
     def visit_Declaration(self, node):
         for init in node.inits:
+            init.type = node.type
             self.scope.put(init.name.id, init)
             init_type = init.accept(self)
-            if init_type != node.type and TypeChecker.tconv.get((init_type, node.type)) is None:
+            if init_type != node.type and not TypeChecker.conversion_possible(init_type, node.type):
                 print("Cannot convert {0} to {1}".format(init_type, node.type))
                 
 
@@ -165,7 +170,6 @@ class TypeChecker(object):
         for declaration in node.decls:
             declaration.accept(self)
         for instruction in node.instrs:
-            print(type(instruction))
             instruction.accept(self)
 
     def visit_Funcall(self, node):
@@ -179,7 +183,28 @@ class TypeChecker(object):
             print("Incorrect number of arguments. {0} requires {1}, {2} provided".format(function.name, len(function.arguments), len(node.args)))
             return None
         # zip reduce
- 
+
+    def visit_Assignment(self, node):
+        variable = self.scope.get(node.id.id) # node.id is in fact Variable
+        if variable is None:
+            print("Undefined variable {0}".format(node.id))
+            return None
+
+        if type(node.expr) == str: # variable name
+            expression_node = self.scope.get(node.expr)
+        else:
+            expression_node = node.expr
+        
+        if expression_node is None:
+            print("Undefined variable {0}".format(node.id))
+            return None
+
+        assigned_type = expression_node.accept(self)
+        if assigned_type != variable.type and not TypeChecker.conversion_possible(assigned_type, variable.type):
+            print("Cannot assign {0} to {1}".format(assigned_type, variable.type))
+            return None
+        return assigned_type
+        
     def visit_Integer(self, node):
         return 'int'
 
