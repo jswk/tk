@@ -1,5 +1,8 @@
 #!/usr/bin/python
 
+class Symbol(object):
+    pass
+    # TODO: Remove
 
 class VariableSymbol(Symbol):
 
