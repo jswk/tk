@@ -147,7 +147,10 @@ class TypeChecker(object):
     def visit_Declaration(self, node):
         for init in node.inits:
             self.scope.put(init.name.id, init)
-            init.accept(self)
+            init_type = init.accept(self)
+            if init_type != node.type and TypeChecker.tconv.get((init_type, node.type)) is None:
+                print("Cannot convert {0} to {1}".format(init_type, node.type))
+                
 
     def visit_Init(self, node):
         declaration = self.scope.get(node.name.id)
@@ -155,8 +158,8 @@ class TypeChecker(object):
             print("Undefined variable {0}".format(node.name))
             return None
 
-        return node.value.accept(self)
-        
+        value_type = node.value.accept(self)
+        return value_type
 
     def visit_CompoundInstruction(self, node):
         for declaration in node.decls:
