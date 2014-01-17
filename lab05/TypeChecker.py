@@ -86,21 +86,10 @@ class TypeChecker(object):
 
     def visit_BinExpr(self, node):
         type1 = type2 = None
-        left_node = self.get_value_scoped(node.left)
 
-        if left_node is None:
-            print("Undefined variable {0}".format(node.left))
-            return None
-        else:
-            type1 = left_node.accept(self)
+        type1 = node.left.accept(self)
 
-        right_node = self.get_value_scoped(node.right)
-
-        if right_node is None:
-            print("Undefined variable {0}".format(node.right))
-            return None
-        else:
-            type2 = right_node.accept(self)
+        type2 = node.right.accept(self)
 
         op = node.operator
 
@@ -113,12 +102,23 @@ class TypeChecker(object):
             print("Cannot evaluate {0} {1} {2} - incompatible types".format(type1, op, type2))
         return None
 
+    def visit_Variable(self, node):
+        value = self.scope.get(node.name)
+
+        if value != None:
+            return value.type
+        else:
+            print("Undefined variable {0} at {1}:{2}".format(node.name, node.pos[0], node.pos[1]))
+            return None
+
+
     def visit_If(self, node):
         condition_type = node.condition.accept(self)
         if condition_type != 'int':
-            print("Condition must evaluate to integer")
+            print("Condition must evaluate to integer at {0}:{1}".format(node.condition.pos[0], node.condition.pos[1]))
         node.block_if.accept(self)
-        node.block_else.accept(self)
+        if node.block_else != None:
+            node.block_else.accept(self)
 
     def visit_While(self, node):
         condition_type = node.condition.accept(self)
@@ -154,15 +154,15 @@ class TypeChecker(object):
     def visit_Declaration(self, node):
         for init in node.inits:
             init.type = node.type
-            self.scope.put(init.name, init)
+            self.scope.put(init.name.name, init.value)
             init_type = init.accept(self)
             if init_type != node.type and not TypeChecker.conversion_possible(init_type, node.type):
-                print("Cannot convert {0} to {1}".format(init_type, node.type))
+                print("Cannot convert {0} to {1} at {2}:{3}".format(init_type, node.type, init.pos[0], init.pos[1]))
 
     def visit_Init(self, node):
-        declaration = self.scope.get(node.name)
+        declaration = self.scope.get(node.name.name)
         if declaration is None:
-            print("Undefined variable {0}".format(node.name))
+            print("Undefined variable {0} at {1}:{2}".format(node.name, node.name.pos[0], node.name.pos[1]))
             return None
 
         value_type = node.value.accept(self)
@@ -175,13 +175,17 @@ class TypeChecker(object):
             instruction.accept(self)
 
     def visit_Funcall(self, node):
-        function = self.scope.get(node.name)
+        function = self.scope.get(node.name.name)
+
         if function is None:
-            print("Function {0} does not exist".format(function.name))
+            print("Function {0} does not exist at {1}:{2}".format(node.name, node.name.pos[0], node.name.pos[1]))
+            return None
+        elif function.type != "function":
+            print("Cannot call as function an ordinary variable {0} at {1}:{2}".format(node.name, node.name.pos[0], node.name.pos[1]))
             return None
 
         if len(function.arguments) != len(node.args):
-            print("Incorrect number of arguments. {0} requires {1}, {2} provided".format(function.name, len(function.arguments), len(node.args)))
+            print("Incorrect number of arguments. {0} requires {1}, {2} provided at {3}:{4}".format(function.name, len(function.arguments), len(node.args), node.pos[0], node.pos[1]))
             return None
 
         # zip reduce because map reduce is for suckers
@@ -194,15 +198,17 @@ class TypeChecker(object):
                 return None
             passed_argument_type = passed_argument.accept(self)
             if passed_argument_type != defined_argument.type and not TypeChecker.conversion_possible(passed_argument_type, defined_argument.type):
-                print("Cannot convert {0} to {1}".format(passed_argument_type, defined_argument.type))
+                print("Cannot convert {0} to {1} at {2}:{3}".format(passed_argument_type, defined_argument.type, passed_argument.pos[0], passed_argument.pos[1]))
                 return None
         return function.return_type
 
     def visit_Assignment(self, node):
-        variable = self.scope.get(node.id)
+        variable = self.scope.get(node.id.name)
         if variable is None:
-            print("Undefined variable {0}".format(node.id))
+            print("Undefined variable {0} at {1}:{2}".format(node.id, node.id.pos[0], node.id.pos[1]))
             return None
+        elif variable.type == "function":
+            print("Cannot assign to function {0} at {1}:{2}".format(node.id, node.id.pos[0], node.id.pos[1]))
 
         expression_node = self.get_value_scoped(node.expr)
 
@@ -215,9 +221,13 @@ class TypeChecker(object):
             return None
 
         if assigned_type != variable.type and not TypeChecker.conversion_possible(assigned_type, variable.type):
-            print("Cannot assign {0} to {1}".format(assigned_type, variable.type))
+            print("Cannot assign {0} to {1} at {2}:{3}".format(assigned_type, variable.type, node.id.pos[0], node.id.pos[1]))
             return None
         return assigned_type
+
+    # def visit_Return(self, node):
+    #     if not self.funcall:
+    #         print("Return must be used inside a function")
 
     def visit_Integer(self, node):
         return 'int'

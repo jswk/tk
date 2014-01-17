@@ -73,7 +73,7 @@ class Cparser(object):
 
     def p_init(self, p):
         """init : ID '=' expression """
-        p[0] = AST.Init(p[1], p[3])
+        p[0] = self.add_pos(AST.Init(self.add_pos(AST.Variable(p[1]), p), p[3]), p)
 
 
     def p_instructions(self, p):
@@ -112,7 +112,7 @@ class Cparser(object):
 
     def p_assignment(self, p):
         """assignment : ID '=' expression ';' """
-        p[0] = AST.Assignment(p[1], p[3])
+        p[0] = AST.Assignment(self.add_pos(AST.Variable(p[1]), p), p[3])
 
 
     def p_choice_instr(self, p):
@@ -139,17 +139,17 @@ class Cparser(object):
 
     def p_return_instr(self, p):
         """return_instr : RETURN expression ';' """
-        p[0] = AST.Return(p[2])
+        p[0] = self.add_pos(AST.Return(p[2]), p)
 
 
     def p_continue_instr(self, p):
         """continue_instr : CONTINUE ';' """
-        p[0] = AST.Continue()
+        p[0] = self.add_pos(AST.Continue(), p)
 
 
     def p_break_instr(self, p):
         """break_instr : BREAK ';' """
-        p[0] = AST.Break()
+        p[0] = self.add_pos(AST.Break(), p)
 
 
     def p_compound_instr(self, p):
@@ -164,25 +164,28 @@ class Cparser(object):
 
     def p_const_int(self, p):
         """const : INTEGER"""
-        p[0] = AST.Integer(p[1])
+        p[0] = self.add_pos(AST.Integer(p[1]), p)
 
     def p_const_float(self, p):
         """const : FLOAT"""
-        p[0] = AST.Float(p[1])
+        p[0] = self.add_pos(AST.Float(p[1]), p)
 
     def p_const_string(self, p):
         """const : STRING"""
-        p[0] = AST.String(p[1])
+        p[0] = self.add_pos(AST.String(p[1]), p)
 
 
     def p_expression_simple(self, p):
         """expression : const
-                      | ID
                       | '(' expression ')' """
         try:
             p[0] = p[2]
         except IndexError:
             p[0] = p[1]
+
+    def p_expression_id(self, p):
+        """expression : ID """
+        p[0] = self.add_pos(AST.Variable(p[1]), p)
 
     def p_expression_binexpr(self, p):
         """expression : expression '+' expression
@@ -203,20 +206,21 @@ class Cparser(object):
                       | expression '<' expression
                       | expression LE expression
                       | expression GE expression """
-        p[0] = AST.BinExpr(p[1], p[2], p[3])
+        p[0] = self.add_pos(AST.BinExpr(p[1], p[2], p[3]), p)
 
     def p_expression_funcall(self, p):
         """expression : ID '(' expr_list_or_empty ')' """
-        p[0] = AST.Funcall(p[1], p[3])
+        p[0] = self.add_pos(AST.Funcall(self.add_pos(AST.Variable(p[1]), p), p[3]), p)
 
     def p_expression_error(self, p):
         """expression : '(' error ')'
                       | ID '(' error ')' """
+        pos = self.get_pos(p, 1)
         try:
             p[4]
-            p[0] = AST.Error("Malformed function call: {0}({1})".format(p[1], p[3]))
+            p[0] = AST.Error("Malformed function call {0}({1}) at line:{2} column:{3}".format(p[1], p[3], pos[0], pos[1]))
         except IndexError:
-            p[0] = AST.Error("Malformed braced expression: ({0})".format(p[2]))
+            p[0] = AST.Error("Malformed braced expression ({0}) at line:{1} column:{2}".format(p[2], pos[0], pos[1]))
 
 
     def p_expr_list_or_empty(self, p):
@@ -241,13 +245,13 @@ class Cparser(object):
         """fundefs : fundef fundefs
                    |  """
         try:
-            p[0] = p[2] + [p[1]]
+            p[0] = [p[1]] + p[2]
         except IndexError:
             p[0] = []
 
     def p_fundef(self, p):
         """fundef : TYPE ID '(' args_list_or_empty ')' compound_instr """
-        p[0] = AST.Fundef(p[2], p[1], p[4], p[6])
+        p[0] = self.add_pos(AST.Fundef(p[2], p[1], p[4], p[6]), p)
 
     def p_args_list_or_empty(self, p):
         """args_list_or_empty : args_list
@@ -267,8 +271,25 @@ class Cparser(object):
 
     def p_arg(self, p):
         """arg : TYPE ID """
-        p[0] = AST.Arg(p[1], p[2])
+        p[0] = self.add_pos(AST.Arg(p[1], p[2]), p)
 
+    def add_pos(self, el, p, i = 1):
+        el.pos = self.get_pos(p, i)
+        return el
+
+    def get_pos(self, p, i = 1):
+        def find_column(input,token):
+            last_cr = input.rfind('\n',0,token)
+            if last_cr < 0:
+                last_cr = 0
+            column = (token - last_cr)
+            return column
+        try:
+            out = p[i].pos
+        except AttributeError:
+            out = (p.lineno(i), find_column(self.scanner.lexer.lexdata, p.lexpos(i)))
+        # print("{}:{} -> {}:{}".format(p.slice, i, out[0], out[1]))
+        return out
 
 
 

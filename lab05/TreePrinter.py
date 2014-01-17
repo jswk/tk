@@ -95,6 +95,10 @@ class TreePrinter:
     def printTree(self):
         return "ERROR"
 
+    @addToClass(AST.Variable)
+    def printTree(self):
+        return self.name
+
     @addToClass(AST.AST)
     def printTree(self):
         return "\n".join([str(decl)   for decl   in p[1]]+

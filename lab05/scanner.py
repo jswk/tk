@@ -41,7 +41,7 @@ class Scanner(object):
 
   tokens = [ "AND", "EQ", "FLOAT", "GE", "ID", "INTEGER", "LE", "NEQ", "OR",
              "SHL", "SHR", "STRING", "TYPE",  ] + list(reserved.values())
-           
+
 
   t_ignore = ' \t\f'
 
@@ -51,6 +51,10 @@ class Scanner(object):
 
   def t_newline2(self,t):
       r'(\r\n)+'
+      t.lexer.lineno += len(t.value) / 2
+
+  def t_newline3(self,t):
+      r'(\n\r)+'
       t.lexer.lineno += len(t.value) / 2
 
 
@@ -66,7 +70,7 @@ class Scanner(object):
   def t_BLOCK_COMMENT(self,t):
       r'/\*(.|\n)*?\*/'
       t.lexer.lineno += t.value.count('\n')
-      
+
 
   def t_FLOAT(self,t):
       r"\d+(\.\d*)|\.\d+"
@@ -75,17 +79,17 @@ class Scanner(object):
   def t_INTEGER(self,t):
       r"\d+"
       return t
-  
+
   def t_STRING(self,t):
       r'\"([^\\\n]|(\\.))*?\"'
       return t
-  
+
   t_LE = r"<="
-    
+
   t_GE = r">="
-  
+
   t_EQ = r"=="
-  
+
   t_NEQ = r"!="
 
   t_AND = r"&&"
@@ -99,11 +103,11 @@ class Scanner(object):
   def t_TYPE(self,t):
       r"\b(int|float|string)\b"
       return t
-  
+
   def t_ID(self,t):
       r"[a-zA-Z_]\w*"
       t.type = Scanner.reserved.get(t.value, 'ID')
       return t
-  
-  
-  
+
+
+

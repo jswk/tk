@@ -12,22 +12,24 @@ class Node(object):
 
 
 class Const(Node):
-    def __init__(self, value):
+    def __init__(self, value, tajp):
         self.value = value
+        self.type = tajp
 
 
 class Integer(Const):
     def __init__(self, value):
-        Const.__init__(self, int(value))
+        Const.__init__(self, int(value), "int")
 
 
 class Float(Const):
     def __init__(self, value):
-        Const.__init__(self, float(value))
+        Const.__init__(self, float(value), "float")
 
 
 class String(Const):
-    pass
+    def __init__(self, value):
+        Const.__init__(self, value, "string")
 
 
 class Arg(Node):
@@ -47,6 +49,7 @@ class Fundef(Node):
         self.return_type = return_type
         self.arguments = arguments
         self.body = body
+        self.type = "function"
 
 class Funcall(Node):
     def __init__(self, name, args):
@@ -117,6 +120,10 @@ class AST(Node):
         self.decl = decl
         self.fundef = fundef
         self.instr = instr
+
+class Variable(Node):
+    def __init__(self, name):
+        self.name = name
 
 # ...
 
