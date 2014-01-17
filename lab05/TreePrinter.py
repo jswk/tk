@@ -44,10 +44,6 @@ class TreePrinter:
     def printTree(self):
         return "ARG " + str(self.id)
 
-    @addToClass(AST.Variable)
-    def printTree(self):
-        return self.id
-
     @addToClass(AST.Const)
     def printTree(self):
         return str(self.value)
@@ -99,5 +95,8 @@ class TreePrinter:
     def printTree(self):
         return "ERROR"
 
-    # @addToClass ...
-    # ...
+    @addToClass(AST.AST)
+    def printTree(self):
+        return "\n".join([str(decl)   for decl   in p[1]]+
+                         [str(fundef) for fundef in p[2]]+
+                         [str(instr)  for instr  in p[3]])

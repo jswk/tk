@@ -30,10 +30,6 @@ class String(Const):
     pass
 
 
-class Variable(Node):
-    def __init__(self, id):
-        self.id = id
-
 class Arg(Node):
     def __init__(self, type, id):
         self.type = type

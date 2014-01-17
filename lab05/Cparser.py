@@ -40,9 +40,6 @@ class Cparser(object):
 
     def p_program(self, p):
         """program : declarations fundefs instructions"""
-        print("\n".join([str(decl)   for decl   in p[1]]+
-                        [str(fundef) for fundef in p[2]]+
-                        [str(instr)  for instr  in p[3]]))
         p[0] = AST.AST(p[1], p[2], p[3])
 
 
@@ -76,7 +73,7 @@ class Cparser(object):
 
     def p_init(self, p):
         """init : ID '=' expression """
-        p[0] = AST.Init(AST.Variable(p[1]), p[3])
+        p[0] = AST.Init(p[1], p[3])
 
 
     def p_instructions(self, p):
@@ -115,7 +112,7 @@ class Cparser(object):
 
     def p_assignment(self, p):
         """assignment : ID '=' expression ';' """
-        p[0] = AST.Assignment(AST.Variable(p[1]), p[3])
+        p[0] = AST.Assignment(p[1], p[3])
 
 
     def p_choice_instr(self, p):
