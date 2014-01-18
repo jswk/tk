@@ -154,10 +154,15 @@ class TypeChecker(object):
     def visit_Declaration(self, node):
         for init in node.inits:
             init.type = node.type
-            self.scope.put(init.name.name, init.value)
-            init_type = init.accept(self)
-            if init_type != node.type and not TypeChecker.conversion_possible(init_type, node.type):
-                print("Cannot convert {0} to {1} at {2}:{3}".format(init_type, node.type, init.pos[0], init.pos[1]))
+            defined_var = self.scope.getDirect(init.name.name)
+            if defined_var is not None:
+                print("Variable {0} already defined at {1}:{2}. First defined at {3}:{4}.".format(
+                    init.name, init.pos[0], init.pos[1], defined_var.pos[0], defined_var.pos[1]))
+            else:
+                self.scope.put(init.name.name, init.value)
+                init_type = init.accept(self)
+                if init_type != node.type and not TypeChecker.conversion_possible(init_type, node.type):
+                    print("Cannot convert {0} to {1} at {2}:{3}".format(init_type, node.type, init.pos[0], init.pos[1]))
 
     def visit_Init(self, node):
         declaration = self.scope.get(node.name.name)

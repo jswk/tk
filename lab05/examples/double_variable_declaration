@@ -1,0 +1,11 @@
+string a = "abc";
+int b = 0;
+float a = 5;
+int b = 6;
+
+int fun(int a)
+{
+    return a;
+}
+
+b = fun(5);
