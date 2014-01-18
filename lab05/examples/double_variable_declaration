@@ -8,4 +8,9 @@ int fun(int a)
     return a;
 }
 
+int b(int a)
+{
+    return a;
+}
+
 b = fun(5);

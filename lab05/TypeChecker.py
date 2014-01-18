@@ -123,20 +123,22 @@ class TypeChecker(object):
     def visit_While(self, node):
         condition_type = node.condition.accept(self)
         if condition_type != 'int':
-            print("Condition must evaluate to integer")
+            print("Condition must evaluate to integer at {0}:{1}".format(node.condition.pos[0], node.condition.pos[1]))
         node.body.accept(self)
 
     def visit_Repeat(self, node):
         condition_type = node.condition.accept(self)
         if condition_type != 'int':
-            print("Condition must evaluate to integer")
+            print("Condition must evaluate to integer at {0}:{1}".format(node.condition.pos[0], node.condition.pos[1]))
         node.body.accept(self)
 
     def visit_Fundef(self, node):
-        if self.scope.getDirect(node.name) is None:
+        symbol = self.scope.getDirect(node.name)
+        if symbol is None:
             self.scope.put(node.name, node)
         else:
-            print("Symbol {0} already defined".format(node.name))
+            print("Symbol {0} already defined at {1}:{2}. First defined at {3}:{4}".format(
+                node.name, node.pos[0], node.pos[1], symbol.pos[0], symbol.pos[1]))
 
         # Create new scope for function
         self.scope = SymbolTable(self.scope, node.name)
@@ -199,7 +201,7 @@ class TypeChecker(object):
             passed_argument = self.get_value_scoped(pair[0])
             defined_argument = pair[1]
             if passed_argument is None:
-                print("Undefined variable {0}".format(pair[0]))
+                print("Undefined variable {0} at {1}:{2}".format(pair[0], pair[0].pos[0], pair[0].pos[1]))
                 return None
             passed_argument_type = passed_argument.accept(self)
             if passed_argument_type != defined_argument.type and not TypeChecker.conversion_possible(passed_argument_type, defined_argument.type):
@@ -218,7 +220,7 @@ class TypeChecker(object):
         expression_node = self.get_value_scoped(node.expr)
 
         if expression_node is None:
-            print("Undefined variable {0}".format(node.id))
+            print("Undefined variable {0} at {1}:{2}".format(node.id, node.id.pos[0], node.id.pos[1]))
             return None
 
         assigned_type = expression_node.accept(self)
@@ -229,10 +231,6 @@ class TypeChecker(object):
             print("Cannot assign {0} to {1} at {2}:{3}".format(assigned_type, variable.type, node.id.pos[0], node.id.pos[1]))
             return None
         return assigned_type
-
-    # def visit_Return(self, node):
-    #     if not self.funcall:
-    #         print("Return must be used inside a function")
 
     def visit_Integer(self, node):
         return 'int'

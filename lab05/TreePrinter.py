@@ -77,7 +77,7 @@ class TreePrinter:
 
     @addToClass(AST.Repeat)
     def printTree(self):
-        return "REPEAT-UNTIL\n" + indent(str(self.until)) + "\n" + indent("\n".join([str(el) for el in self.body]))
+        return "REPEAT-UNTIL\n" + indent(str(self.condition)) + "\n" + indent("\n".join([str(el) for el in self.body]))
 
     @addToClass(AST.Break)
     def printTree(self):

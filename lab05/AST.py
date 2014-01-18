@@ -78,9 +78,9 @@ class While(Node):
         self.body = body
 
 class Repeat(Node):
-    def __init__(self, body, until):
+    def __init__(self, body, condition):
         self.body = body
-        self.until = until
+        self.condition = condition
 
 class Error(Node):
     def __init__(self, message):
