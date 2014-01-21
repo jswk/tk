@@ -73,16 +73,11 @@ class TypeChecker(object):
     def conversion_possible(type1, type2):
         return TypeChecker.tconv.get((type1, type2)) is not None
 
-    def get_value_scoped(self, value):
-        '''
-        Sometimes we have strings as nodes.
-        It means they are symbol ids, so we have
-        to retrieve it from our scope then.
-        '''
-        return self.scope.get(value) if type(value) == str else value
-
     def __init__(self):
         self.scope = SymbolTable(None, 'global')
+        self.return_type = None
+        self.returned = None
+        self.breakable = False
 
     def visit_BinExpr(self, node):
         type1 = type2 = None
@@ -99,7 +94,7 @@ class TypeChecker(object):
         try:
             return TypeChecker.ttype[(op, type1, type2)]
         except(KeyError):
-            print("Cannot evaluate {0} {1} {2} - incompatible types".format(type1, op, type2))
+            print("Cannot evaluate {0} {1} {2} - incompatible types at {3}:{4}".format(type1, op, type2, node.pos[0], node.pos[1]))
         return None
 
     def visit_Variable(self, node):
@@ -124,13 +119,19 @@ class TypeChecker(object):
         condition_type = node.condition.accept(self)
         if condition_type != 'int':
             print("Condition must evaluate to integer at {0}:{1}".format(node.condition.pos[0], node.condition.pos[1]))
+        old_breakable = self.breakable
+        self.breakable = True
         node.body.accept(self)
+        self.breakable = old_breakable
 
     def visit_Repeat(self, node):
         condition_type = node.condition.accept(self)
         if condition_type != 'int':
             print("Condition must evaluate to integer at {0}:{1}".format(node.condition.pos[0], node.condition.pos[1]))
+        old_breakable = self.breakable
+        self.breakable = True
         node.body.accept(self)
+        self.breakable = old_breakable
 
     def visit_Fundef(self, node):
         symbol = self.scope.getDirect(node.name)
@@ -142,10 +143,18 @@ class TypeChecker(object):
 
         # Create new scope for function
         self.scope = SymbolTable(self.scope, node.name)
+        # Leave information about return type of the function
+        self.return_type = node.return_type
+        self.returned = False
         for argument in node.arguments:
             argument.accept(self)
         node.body.accept(self)
 
+        if not self.returned:
+            print("No return statement found in function {0} defined at {1}:{2}".format(node.name, node.pos[0], node.pos[1]))
+        # Clear information about return type
+        self.return_type = None
+        self.returned = False
         # Get the hell out of function scope, after its done
         self.scope = self.scope.parent
 
@@ -176,10 +185,15 @@ class TypeChecker(object):
         return value_type
 
     def visit_CompoundInstruction(self, node):
+        self.scope = SymbolTable(self.scope, "compound")
+
         for declaration in node.decls:
             declaration.accept(self)
         for instruction in node.instrs:
             instruction.accept(self)
+
+        # Get the hell out of function scope, after its done
+        self.scope = self.scope.parent
 
     def visit_Funcall(self, node):
         function = self.scope.get(node.name.name)
@@ -198,11 +212,8 @@ class TypeChecker(object):
         # zip reduce because map reduce is for suckers
         arg_pairs = zip(node.args, function.arguments)
         for pair in arg_pairs:
-            passed_argument = self.get_value_scoped(pair[0])
+            passed_argument = pair[0]
             defined_argument = pair[1]
-            if passed_argument is None:
-                print("Undefined variable {0} at {1}:{2}".format(pair[0], pair[0].pos[0], pair[0].pos[1]))
-                return None
             passed_argument_type = passed_argument.accept(self)
             if passed_argument_type != defined_argument.type and not TypeChecker.conversion_possible(passed_argument_type, defined_argument.type):
                 print("Cannot convert {0} to {1} at {2}:{3}".format(passed_argument_type, defined_argument.type, passed_argument.pos[0], passed_argument.pos[1]))
@@ -217,11 +228,7 @@ class TypeChecker(object):
         elif variable.type == "function":
             print("Cannot assign to function {0} at {1}:{2}".format(node.id, node.id.pos[0], node.id.pos[1]))
 
-        expression_node = self.get_value_scoped(node.expr)
-
-        if expression_node is None:
-            print("Undefined variable {0} at {1}:{2}".format(node.id, node.id.pos[0], node.id.pos[1]))
-            return None
+        expression_node = node.expr
 
         assigned_type = expression_node.accept(self)
         if assigned_type is None:
@@ -248,4 +255,24 @@ class TypeChecker(object):
             fundef.accept(self)
         for instr in node.instr:
             instr.accept(self)
+
+    def visit_Return(self, node):
+        return_type = node.expr.accept(self)
+        if self.return_type == None:
+            print("Return statement used outside function at {0}:{1}".format(node.pos[0], node.pos[1]))
+        elif return_type != None and self.return_type != return_type and not TypeChecker.conversion_possible(return_type, self.return_type):
+            print("Impossible to convert {0} to {1} in return statement at {2}:{3}".format(return_type, self.return_type, node.pos[0], node.pos[1]))
+        else:
+            self.returned = True
+        return return_type
+
+    def visit_Continue(self, node):
+        if not self.breakable:
+            print("Nothing to 'continue' at {0}:{1}".format(node.pos[0], node.pos[1]))
+
+    def visit_Break(self, node):
+        if not self.breakable:
+            print("Nothing to 'break' from at {0}:{1}".format(node.pos[0], node.pos[1]))
+
+
 
