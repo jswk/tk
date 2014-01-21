@@ -7,6 +7,9 @@ class Node(object):
         if method != None:
             return method(self)
 
+    def accept666(self, visitor):
+        return visitor.visit(self)
+
     def __str__(self):
         return self.printTree()
 
