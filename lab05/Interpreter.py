@@ -131,9 +131,11 @@ class Interpreter(object):
     # simplistic while loop interpretation
     @when(AST.While)
     def visit(self, node):
-        r = None
-        while node.cond.accept(self):
-            r = node.body.accept(self)
-        return r
+        while node.condition.accept666(self) != 0:
+            node.body.accept666(self)
 
-
+    @when(AST.Repeat)
+    def visit(self, node):
+        node.body.accept666(self)
+        while node.condition.accept666(self) == 0:
+            node.body.accept666(self)

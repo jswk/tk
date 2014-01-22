@@ -1,0 +1,14 @@
+int a = 0;
+
+while (a < 5) {
+      print a;
+      a = a + 1;
+}
+
+print a;
+
+repeat {
+       a = a - 1;
+} until a < 6;
+
+print a;
