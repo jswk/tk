@@ -36,6 +36,15 @@ class Interpreter(object):
     def visit(self, node):
         pass
 
+    @when(AST.AST)
+    def visit(self, node):
+        for declaration in node.decl:
+            declaration.accept666(self)
+        for fundef in node.fundef:
+            fundef.accept666(self)
+        for instruction in node.instr:
+            instruction.accept666(self)
+
     @when(AST.BinExpr)
     def visit(self, node):
         r1 = node.left.accept666(self)
@@ -82,7 +91,7 @@ class Interpreter(object):
         return node.value
 
     # simplistic while loop interpretation
-    @when(AST.WhileInstr)
+    @when(AST.While)
     def visit(self, node):
         r = None
         while node.cond.accept(self):
