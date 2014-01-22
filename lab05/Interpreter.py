@@ -52,6 +52,16 @@ class Interpreter(object):
 
         return Interpreter.binary_operations[node.op](r1, r2)
 
+    @when(AST.Declaration)
+    def visit(self, node):
+        for init in node.inits:
+            init.accept666(self)
+
+    @when(AST.Init)
+    def visit(self, node):
+        value = node.value.accept666(self)[0]
+        self.memory_stack.put(node.name.name, value)
+
     @when(AST.CompoundInstruction)
     def visit(self, node):
         for declaration in node.decl:
@@ -80,6 +90,11 @@ class Interpreter(object):
             name = pair[0].id
             value = pair[1]# TODO START HERE
         self.memory_stack.pop()
+
+    @when(AST.Variable)
+    def visit(self, node):
+        value = self.memory_stack.get(node.name)
+        return value
 
     @when(AST.Print)
     def visit(self, node):

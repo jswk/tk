@@ -24,7 +24,7 @@ class MemoryStack:
             self.memories.append(memory)
 
     def get(self, name):             # get from memory stack current value of variable <name>
-        for memory in reversed(memories):
+        for memory in reversed(self.memories):
             if memory.has_key(name):
                 return memory.get(name)
         return None

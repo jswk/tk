@@ -127,7 +127,8 @@ class AST(Node):
 class Variable(Node):
     def __init__(self, name):
         self.name = name
-
+    def __str__(self):
+        return self.name # TODO Fix shit to work without it
 # ...
 
 
