@@ -64,9 +64,9 @@ class Interpreter(object):
 
     @when(AST.CompoundInstruction)
     def visit(self, node):
-        for declaration in node.decl:
+        for declaration in node.decls:
             declaration.accept666(self)
-        for instruction in node.instr:
+        for instruction in node.instrs:
             instruction.accept666(self)
 
     @when(AST.Assignment)
@@ -118,6 +118,16 @@ class Interpreter(object):
     def visit(self, node):
         return node.value[1:-1] # Trim quotes
 
+
+    @when(AST.If)
+    def visit(self, node):
+        shall_you_pass = node.condition.accept666(self) != 0
+        if not shall_you_pass:
+            # run you fools!
+            node.block_else.accept666(self)
+        else:
+            node.block_if.accept666(self)
+    
     # simplistic while loop interpretation
     @when(AST.While)
     def visit(self, node):

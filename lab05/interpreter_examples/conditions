@@ -1,0 +1,23 @@
+int a = 0;
+int b = 13;
+
+if (b == 13) {
+   print "b ok";
+   print "dalsza tez dziala";
+} else {
+  print "sorry man";
+}
+
+if ("jasiek" == "jan")
+   print "niet";
+else if (a == 0) {
+   print "yup";
+} else {
+   print "nope";
+}
+
+if (a + 13 != b) {
+   print "nope";
+} else {
+  print "oks spoks";
+}
