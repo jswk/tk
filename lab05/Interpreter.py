@@ -78,6 +78,10 @@ class Interpreter(object):
         for instruction in node.instrs:
             instruction.accept666(self)
 
+    @when(AST.LabeledInstr)
+    def visit(self, node):
+        node.instr.accept666(self)
+
     @when(AST.Assignment)
     def visit(self, node):
         value = node.expr.accept666(self)
@@ -145,7 +149,7 @@ class Interpreter(object):
                 node.block_else.accept666(self)
         else:
             node.block_if.accept666(self)
-    
+
     # simplistic while loop interpretation
     @when(AST.While)
     def visit(self, node):

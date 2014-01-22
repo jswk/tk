@@ -26,7 +26,7 @@ print "With repeat";
 repeat {
        a = a - 1;
        if (a == 1) break;
-} until (a == (-4));
+} until (a == (0-4));
 print a;
 
 print "Continue";
