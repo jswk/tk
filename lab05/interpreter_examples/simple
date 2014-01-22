@@ -1,4 +1,11 @@
 int a = 5;
 int b = 4;
  
+string moi_string = "rafal";
+
 print a;
+b = b + 666;
+print b;
+
+print "hola mundo";
+print "me llamo " + moi_string;

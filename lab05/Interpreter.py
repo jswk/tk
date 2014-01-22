@@ -50,7 +50,7 @@ class Interpreter(object):
         r1 = node.left.accept666(self)
         r2 = node.right.accept666(self)
 
-        return Interpreter.binary_operations[node.op](r1, r2)
+        return Interpreter.binary_operations[node.operator](r1, r2)
 
     @when(AST.Declaration)
     def visit(self, node):
@@ -59,7 +59,7 @@ class Interpreter(object):
 
     @when(AST.Init)
     def visit(self, node):
-        value = node.value.accept666(self)[0]
+        value = node.value.accept666(self)
         self.memory_stack.put(node.name.name, value)
 
     @when(AST.CompoundInstruction)
@@ -104,6 +104,19 @@ class Interpreter(object):
     @when(AST.Const)
     def visit(self, node):
         return node.value
+
+    # This stuff needs to be here, otherwise visitor implementation returns list containing value of AST.Const.visit instead of single number
+    @when(AST.Integer)
+    def visit(self, node):
+        return node.value
+
+    @when(AST.Float)
+    def visit(self, node):
+        return node.value
+
+    @when(AST.String)
+    def visit(self, node):
+        return node.value[1:-1] # Trim quotes
 
     # simplistic while loop interpretation
     @when(AST.While)
