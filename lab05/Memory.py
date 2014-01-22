@@ -20,7 +20,8 @@ class MemoryStack:
                                                                              
     def __init__(self, memory=None): # initialize memory stack with memory <memory>
         self.memories = []
-        self.memories.append(memory) if memory is not None
+        if memory is not None:
+            self.memories.append(memory)
 
     def get(self, name):             # get from memory stack current value of variable <name>
         for memory in reversed(memories):

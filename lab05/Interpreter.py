@@ -36,7 +36,7 @@ class Interpreter(object):
     def visit(self, node):
         pass
 
-    @when(AST.BinOp)
+    @when(AST.BinExpr)
     def visit(self, node):
         r1 = node.left.accept666(self)
         r2 = node.right.accept666(self)
@@ -69,8 +69,13 @@ class Interpreter(object):
         pairs = zip(function.arguments, node.args)
         for pair in pairs:
             name = pair[0].id
-            value = pair[1]. # TODO START HERE
+            value = pair[1]# TODO START HERE
         self.memory_stack.pop()
+
+    @when(AST.Print)
+    def visit(self, node):
+        expression_value = node.expr.accept666(self)
+        print(expression_value)
 
     @when(AST.Const)
     def visit(self, node):
