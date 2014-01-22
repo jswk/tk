@@ -1,0 +1,11 @@
+int funa(int a, int b) {
+    print a + b;
+    if (a + b == 15) {
+       return 8;
+    }
+    print "dalej";
+    return 666;
+}
+
+print funa(3 + 4, 8);
+print funa(0, 4);

@@ -97,8 +97,16 @@ class Interpreter(object):
         pairs = zip(function.arguments, node.args)
         for pair in pairs:
             name = pair[0].id
-            value = pair[1]# TODO START HERE
+            value = pair[1].accept666(self)
+            self.memory_stack.put(name, value)
+
+        returned_value = None
+        try:
+            function.body.accept666(self)
+        except ReturnException, e:
+            returned_value = e.value
         self.memory_stack.pop()
+        return returned_value
 
     @when(AST.Variable)
     def visit(self, node):
