@@ -5,6 +5,15 @@ from Memory import *
 from Exceptions import  *
 from visit import *
 
+class ReturnException(Exception):
+    def __init__(self, value):
+        self.value = value
+
+class BreakException(Exception):
+    pass
+
+class ContinueException(Exception):
+    pass
 
 class Interpreter(object):
 
@@ -124,7 +133,8 @@ class Interpreter(object):
         shall_you_pass = node.condition.accept666(self) != 0
         if not shall_you_pass:
             # run you fools!
-            node.block_else.accept666(self)
+            if node.block_else is not None:
+                node.block_else.accept666(self)
         else:
             node.block_if.accept666(self)
     
@@ -132,10 +142,37 @@ class Interpreter(object):
     @when(AST.While)
     def visit(self, node):
         while node.condition.accept666(self) != 0:
-            node.body.accept666(self)
+            try:
+                node.body.accept666(self)
+            except(BreakException):
+                return None
+            except(ContinueException):
+                pass
 
     @when(AST.Repeat)
     def visit(self, node):
-        node.body.accept666(self)
-        while node.condition.accept666(self) == 0:
-            node.body.accept666(self)
+        try:
+            try:
+                node.body.accept666(self)
+            except(ContinueException):
+                pass
+            while node.condition.accept666(self) == 0:
+                try:
+                    node.body.accept666(self)
+                except(ContinueException):
+                    pass
+        except(BreakException):
+            pass
+
+    @when(AST.Continue)
+    def visit(self, node):
+        raise ContinueException()
+
+    @when(AST.Break)
+    def visit(self, node):
+        raise BreakException()
+
+    @when(AST.Return)
+    def visit(self, node):
+        value = node.expr.accept666(self)
+        raise ReturnException(value)
